@@ -53,9 +53,14 @@
                 </div>
 
                 <button type="submit" class="w-full bg-[#007BFF] hover:bg-blue-600 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center mt-2 shadow-sm">
-                    Ingresar a GOVFLOW
+                    Ingresar
                 </button>
             </form>
+            <div class="text-center mt-5">
+            <p class="text-sm text-slate-500">
+                ¿No tienes una cuenta? <a href="{{ url('/registro') }}" class="text-[#007BFF] font-medium hover:underline">Regístrate aquí</a>
+            </p>
+        </div>
         </div>
     </div>
 
