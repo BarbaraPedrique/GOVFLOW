@@ -19,7 +19,7 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
             <div class="text-center mb-6">
                 <h2 class="text-[22px] font-bold text-slate-800 mb-1">Crear Cuenta</h2>
-                <p class="text-slate-500 text-sm">Solicita acceso a la plataforma de gobernanza</p>
+                <p class="text-slate-500 text-sm">Solicitar acceso a la plataforma de gobernanza</p>
             </div>
 
             <form action="#" method="POST" class="space-y-4">
