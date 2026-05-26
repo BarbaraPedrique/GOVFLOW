@@ -8,11 +8,11 @@ Route::get('/', function () {
     return view('login');
 });
 
-Route::get('/', function () {
+Route::get('/index', function () {
     return view('index');
 });
 
-Route::get('/', function () {
+Route::get('/create', function () {
     return view('create');
 });
 
@@ -25,11 +25,11 @@ Route::get('/inicio', function () {
 });
 
 // Registro
-Route::get('/register', [RegisterController::class, 'showForm'])->name('register');
-Route::post('/register', [RegisterController::class, 'register'])->name('register.store');
+//Route::get('/register', [RegisterController::class, 'showForm'])->name('register');
+//Route::post('/register', [RegisterController::class, 'register'])->name('register.store');
 
 // Dashboard principal
-Route::get('/inicio', function () {
+Route::get('/dashboard', function () {
     return view('dashboard');
 })->name('inicio');
 
