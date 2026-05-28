@@ -52,8 +52,9 @@
                     </div>
                 </div>
 
+                <a href="{{ url('/inicio') }}"
                 <button type="submit" class="w-full bg-[#007BFF] hover:bg-blue-600 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center mt-2 shadow-sm">
-                    Ingresar
+                    Iniciar Sesión</a>
                 </button>
             </form>
             <div class="text-center mt-5">
