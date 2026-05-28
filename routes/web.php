@@ -12,9 +12,6 @@ Route::get('/index', function () {
     return view('index');
 });
 
-Route::get('/create', function () {
-    return view('create');
-});
 
 Route::get('/registro', function () {
     return view('register');
@@ -24,15 +21,22 @@ Route::get('/inicio', function () {
     return view('inicio');
 });
 
-// Registro
-//Route::get('/register', [RegisterController::class, 'showForm'])->name('register');
-//Route::post('/register', [RegisterController::class, 'register'])->name('register.store');
+//EDITAR PERFIL
 
-// Dashboard principal
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->name('inicio');
+// Rutas para editar perfil
+Route::get('/editar_perfil', function () {
+    return view('editar_perfil'); // Esto carga tu archivo editar_perfil.blade.php
+})->name('perfil.edit');
 
-// Flujos de trabajo (CRUD completo)
-Route::resource('flujos', FlujoTrabajoController::class);
+Route::put('/perfil/actualizar', function (\Illuminate\Http\Request $request) {
+    // Aquí irá la lógica para guardar en la base de datos más adelante.
+    // Por ahora, solo redireccionamos de vuelta a inicio.
+    return redirect('/inicio')->with('status', 'Perfil actualizado (simulado)');
+})->name('perfil.update');
+
+//Flujos de Trabajo
+
+Route::get('/flujos', function () {
+    return view('flujos');
+});
 
