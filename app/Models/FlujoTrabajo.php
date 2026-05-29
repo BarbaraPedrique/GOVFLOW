@@ -15,7 +15,17 @@ class FlujoTrabajo extends Model
         'nombre',
         'departamento',
         'estado',
+        'fecha_limite',
+        'fecha_completado',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'fecha_limite' => 'date',
+            'fecha_completado' => 'date',
+        ];
+    }
 
     public static function generarCodigo(): string
     {
@@ -27,5 +37,13 @@ class FlujoTrabajo extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getCompletadoATiempoAttribute(): ?bool
+    {
+        if (!$this->fecha_limite || !$this->fecha_completado) {
+            return null;
+        }
+        return $this->fecha_completado <= $this->fecha_limite;
     }
 }
