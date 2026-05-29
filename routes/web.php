@@ -1,42 +1,33 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\FlujoTrabajoController;
 
-Route::get('/', function () {
-    return view('login');
+Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/', [LoginController::class, 'login'])->name('login.store');
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+Route::get('/registro', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('/registro', [RegisterController::class, 'register'])->name('register.store');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/inicio', [DashboardController::class, 'index'])->name('inicio');
+
+    Route::get('/editar_perfil', [ProfileController::class, 'edit'])->name('perfil.edit');
+    Route::put('/perfil/actualizar', [ProfileController::class, 'update'])->name('perfil.update');
+
+    Route::get('/flujos', function () {
+        return view('flujos');
+    })->name('flujos');
+
+    Route::resource('flujos-trabajo', FlujoTrabajoController::class);
 });
 
-Route::get('/index', function () {
-    return view('index');
+// Fallback — redirigir a login si no hay ruta
+Route::fallback(function () {
+    return redirect('/');
 });
-
-
-Route::get('/registro', function () {
-    return view('register');
-});
-
-Route::get('/inicio', function () {
-    return view('inicio');
-});
-
-//EDITAR PERFIL
-
-// Rutas para editar perfil
-Route::get('/editar_perfil', function () {
-    return view('editar_perfil'); // Esto carga tu archivo editar_perfil.blade.php
-})->name('perfil.edit');
-
-Route::put('/perfil/actualizar', function (\Illuminate\Http\Request $request) {
-    // Aquí irá la lógica para guardar en la base de datos más adelante.
-    // Por ahora, solo redireccionamos de vuelta a inicio.
-    return redirect('/inicio')->with('status', 'Perfil actualizado (simulado)');
-})->name('perfil.update');
-
-//Flujos de Trabajo
-
-Route::get('/flujos', function () {
-    return view('flujos');
-});
-

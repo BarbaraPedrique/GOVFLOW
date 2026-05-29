@@ -22,8 +22,22 @@
                 <p class="text-slate-500 text-sm">Ingresa tus credenciales para acceder a la plataforma</p>
             </div>
 
-            <form action="#" method="POST" class="space-y-5">
+            <form action="{{ route('login') }}" method="POST" class="space-y-5">
                 @csrf
+
+                @if ($errors->any())
+                    <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">
+                        @foreach ($errors->all() as $error)
+                            <p>{{ $error }}</p>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if (session('success'))
+                    <div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3">
+                        {{ session('success') }}
+                    </div>
+                @endif
 
                 <div>
                     <label for="email" class="block text-sm font-semibold text-slate-800 mb-2">Correo Electrónico</label>
@@ -52,9 +66,8 @@
                     </div>
                 </div>
 
-                <a href="{{ url('/inicio') }}"
                 <button type="submit" class="w-full bg-[#007BFF] hover:bg-blue-600 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center mt-2 shadow-sm">
-                    Iniciar Sesión</a>
+                    Iniciar Sesión
                 </button>
             </form>
             <div class="text-center mt-5">

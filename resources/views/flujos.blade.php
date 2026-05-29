@@ -56,8 +56,8 @@
                 <div class="relative" x-data="{ open: false }">
                     <div @click="open = !open" class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-all">
                         <div class="text-right hidden sm:block">
-                            <p class="text-sm font-semibold text-slate-800 leading-none">Juan Pérez</p>
-                            <p class="text-[11px] text-slate-400 font-medium mt-0.5">Administrador</p>
+                            <p class="text-sm font-semibold text-slate-800 leading-none">{{ auth()->user()->name }}</p>
+                            <p class="text-[11px] text-slate-400 font-medium mt-0.5">{{ auth()->user()->roleLabel() }}</p>
                         </div>
                         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="Avatar" class="h-9 w-9 rounded-full object-cover border border-slate-200">
                         <svg class="h-4 w-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -75,10 +75,13 @@
                             Editar Perfil
                         </a>
                         <hr class="my-2 border-slate-100">
-                        <a href="{{ url('/') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                            Cerrar Sesión
-                        </a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors w-full text-left">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                Cerrar Sesión
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FlujoTrabajo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class FlujoTrabajoController extends Controller
 {
@@ -51,6 +52,7 @@ class FlujoTrabajoController extends Controller
             'nombre'       => $request->nombre,
             'departamento' => $request->departamento,
             'estado'       => $request->estado,
+            'user_id'      => Auth::id(),
         ]);
 
         return redirect()->route('flujos.index')
