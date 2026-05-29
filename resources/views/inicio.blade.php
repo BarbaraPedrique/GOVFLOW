@@ -52,8 +52,8 @@
                 <div class="relative" x-data="{ open: false }">
                     <div @click="open = !open" class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-all">
                         <div class="text-right hidden sm:block">
-                            <p class="text-sm font-semibold text-slate-800 leading-none">Juan Pérez</p>
-                            <p class="text-[11px] text-slate-400 font-medium mt-0.5">Administrador</p>
+                            <p class="text-sm font-semibold text-slate-800 leading-none">{{ Auth::user()->name }}</p>
+                            <p class="text-[11px] text-slate-400 font-medium mt-0.5">{{ Auth::user()->role?->display_name ?? 'Sin rol' }}</p>
                         </div>
                         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="Avatar" class="h-9 w-9 rounded-full object-cover border border-slate-200">
                         <svg class="h-4 w-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -79,10 +79,13 @@
 
                         <hr class="my-2 border-slate-100">
 
-                        <a href="{{ url('/') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                            Cerrar Sesión
-                        </a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors w-full text-left">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                Cerrar Sesión
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -97,9 +100,9 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-1">
                  <div class="bg-white p-6 rounded-2x1 border border-slate-200 shadow-sm flex justify-between items-start">
                     <div class="space-y-2">
-                        <span class="text-xs font-semibold text-slate-500 uppercase">Trabajadores Activos</span>
-                        <h3 class="text-3xl font-bold text-slate-800">048</h3>
-                        <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md inline-block">+12% de participacion que ayer</span>
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Flujos de Trabajo</span>
+                        <h3 class="text-3xl font-bold text-slate-800">{{ $totalFlujos }}</h3>
+                        <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md inline-block">{{ $flujosActivos }} activos</span>
                     </div>
                     <div class="p-2.5 bg-blue-50 text-[#007BFF] rounded-xl">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>

@@ -22,8 +22,16 @@
                 <p class="text-slate-500 text-sm">Solicitar acceso a la plataforma de gobernanza</p>
             </div>
 
-            <form action="#" method="POST" class="space-y-4">
+            <form action="{{ route('register') }}" method="POST" class="space-y-4">
                 @csrf
+
+                @if ($errors->any())
+                    <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">
+                        @foreach ($errors->all() as $error)
+                            <p>{{ $error }}</p>
+                        @endforeach
+                    </div>
+                @endif
 
                 <div>
                     <label for="name" class="block text-sm font-semibold text-slate-800 mb-1.5">Nombre Completo</label>
@@ -57,11 +65,11 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 0v1.5m0-1.5c.03 0 .06 0 .09 0A11.947 11.947 0 0012 3v.036z" />
                             </svg>
                         </div>
-                        <select name="role" id="role" class="w-full pl-11 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#007BFF] focus:ring-1 focus:ring-[#007BFF] text-slate-700 appearance-none transition-colors">
-                            <option value="editor">Gerente</option>
-                            <option value="administrador">Administrador</option>
-                            <option value="consultor">Empleado</option>
-                        </select>
+                            <select name="role" id="role" class="w-full pl-11 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#007BFF] focus:ring-1 focus:ring-[#007BFF] text-slate-700 appearance-none transition-colors">
+                                <option value="gerente">Gerente</option>
+                                <option value="administrador">Administrador</option>
+                                <option value="empleado">Empleado</option>
+                            </select>
                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
