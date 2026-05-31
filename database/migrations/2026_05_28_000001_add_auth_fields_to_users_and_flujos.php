@@ -34,9 +34,11 @@ return new class extends Migration
         });
 
         DB::table('roles')->insert([
-            ['name' => 'administrador', 'slug' => 'administrador', 'display_name' => 'Administrador', 'description' => 'Acceso total al sistema'],
-            ['name' => 'gerente', 'slug' => 'gerente', 'display_name' => 'Gerente', 'description' => 'Gestiona flujos de trabajo'],
-            ['name' => 'empleado', 'slug' => 'empleado', 'display_name' => 'Empleado', 'description' => 'Usuario consultor'],
+            ['name' => 'super_admin',   'slug' => 'super_admin',   'display_name' => 'Super Admin',      'description' => 'Acceso total al sistema, puede gestionar roles'],
+            ['name' => 'administrador', 'slug' => 'administrador', 'display_name' => 'Administrador',    'description' => 'Acceso total al sistema excepto gestión de roles'],
+            ['name' => 'gerente',       'slug' => 'gerente',       'display_name' => 'Gerente',          'description' => 'Gestiona flujos de trabajo'],
+            ['name' => 'lider_equipo',  'slug' => 'lider_equipo',  'display_name' => 'Líder de Equipo',  'description' => 'Supervisa equipos de empleados'],
+            ['name' => 'empleado',      'slug' => 'empleado',      'display_name' => 'Empleado',         'description' => 'Usuario consultor'],
         ]);
 
         Schema::table('users', function (Blueprint $table) {

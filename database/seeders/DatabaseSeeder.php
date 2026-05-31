@@ -13,26 +13,32 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
+        $this->call([RoleSeeder::class]);
+
+        User::firstOrCreate(
+            ['email' => 'superadmin@govflow.com'],
+            ['name' => 'Super Admin', 'password' => bcrypt('admin123'), 'role_id' => Role::where('slug', 'super_admin')->first()?->id, 'status' => 'activo'],
+        );
+
+        User::firstOrCreate(
+            ['email' => 'admin@govflow.com'],
+            ['name' => 'Admin', 'password' => bcrypt('admin123'), 'role_id' => Role::where('slug', 'administrador')->first()?->id, 'status' => 'activo'],
+        );
+
+        User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            ['name' => 'Test User', 'password' => bcrypt('password'), 'role_id' => Role::where('slug', 'empleado')->first()?->id, 'status' => 'activo'],
+        );
+
+        User::firstOrCreate(
+            ['email' => 'gerente@govflow.com'],
+            ['name' => 'Gerente Test', 'password' => bcrypt('admin123'), 'role_id' => Role::where('slug', 'gerente')->first()?->id, 'status' => 'activo'],
+        );
+
         $this->call([
-            RoleSeeder::class,
             FlujoTrabajoSeeder::class,
-        ]);
-
-        $adminRole = Role::where('slug', 'administrador')->first();
-
-        User::factory()->create([
-            'name' => 'Admin',
-            'email' => 'admin@govflow.com',
-            'password' => bcrypt('admin123'),
-            'role_id' => $adminRole?->id,
-            'status' => 'activo',
-        ]);
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'role_id' => $adminRole?->id,
-            'status' => 'activo',
+            FlujoEstadoSeeder::class,
+            LogAuditoriaSeeder::class,
         ]);
     }
 }

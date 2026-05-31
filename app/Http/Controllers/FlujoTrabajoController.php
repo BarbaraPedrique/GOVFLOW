@@ -88,4 +88,11 @@ class FlujoTrabajoController extends Controller
         return redirect()->route('flujos.index')
             ->with('success', 'Flujo eliminado correctamente.');
     }
+
+    // Mostrar vista de línea de tiempo con estados
+    public function showTimeline()
+    {
+        $flujos = FlujoTrabajo::with('estados')->orderByDesc('id')->get();
+        return view('flujos', compact('flujos'));
+    }
 }

@@ -89,7 +89,7 @@ class FlujoTrabajoSeeder extends Seeder
         ];
 
         foreach ($flujos as $flujo) {
-            FlujoTrabajo::create($flujo);
+            FlujoTrabajo::firstOrCreate(['codigo' => $flujo['codigo']], $flujo);
         }
     }
 }

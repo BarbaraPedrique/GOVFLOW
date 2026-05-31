@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Inter', sans-serif; } [x-cloak] { display: none !important; } .paso { @apply bg-white border-2 border-slate-200 rounded-xl p-4 shadow-sm cursor-grab active:cursor-grabbing transition-all; } .paso:hover { @apply border-[#007BFF] shadow-md; } .paso-conector { @apply flex items-center justify-center; } .paso-conector::after { content: ''; @apply block w-0.5 h-8 bg-slate-300; }</style>
+    <style> body { font-family: 'Inter', sans-serif; } [x-cloak] { display: none !important; } </style>
 </head>
 <body class="bg-slate-50 flex min-h-screen">
 
@@ -22,7 +22,9 @@
         <a href="{{ route('horarios.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> Horarios</a>
         <a href="{{ route('flujos') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> Flujos de Trabajo</a>
         <a href="{{ route('auditoria') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> Auditoría</a>
-        <a href="{{ route('logs.auditoria') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> Logs Auditoría</a>
+        @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador']))
+            <a href="{{ route('logs.auditoria') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> Logs Auditoría</a>
+        @endif
         <a href="{{ route('disenador') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#007BFF] bg-blue-50 rounded-xl transition-colors"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg> Diseñador</a>
     </nav>
 </aside>
@@ -43,83 +45,227 @@
         </div>
     </header>
 
-    <main class="flex-1 p-10 mt-16 max-w-[1400px] w-full mx-auto space-y-8">
-        @if (session('success'))
-            <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg p-4">{{ session('success') }}</div>
-        @endif
-
-        <div x-data="disenadorApp()" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div class="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 h-fit">
-                <h3 class="text-sm font-semibold text-slate-700 mb-4">Flujo de Trabajo</h3>
-                <select x-model="flujoId" @change="cargarPasos" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm mb-4 bg-white">
-                    <option value="">Seleccionar flujo...</option>
-                    @foreach ($flujos as $flujo)
-                        <option value="{{ $flujo->id }}">{{ $flujo->codigo }} - {{ $flujo->nombre }}</option>
-                    @endforeach
-                </select>
-
-                <template x-if="flujoId">
-                    <div>
-                        <div class="flex gap-2 mb-4">
-                            <input type="text" x-model="nuevoPasoNombre" placeholder="Nuevo paso..." class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#007BFF]">
-                            <button @click="agregarPaso" class="px-3 py-2 rounded-xl bg-[#007BFF] text-white text-sm font-semibold hover:bg-blue-600">+</button>
-                        </div>
-
-                        <div class="space-y-1">
-                            <template x-for="(paso, i) in pasos" :key="i">
-                                <div>
-                                    <div draggable="true"
-                                         @dragstart="dragIndex = i"
-                                         @dragover.prevent
-                                         @drop="moverPaso(i)"
-                                         class="paso flex items-center gap-3">
-                                        <div class="flex-1">
-                                            <input type="text" x-model="paso.nombre" class="w-full bg-transparent text-sm font-medium text-slate-800 focus:outline-none border-b border-transparent focus:border-[#007BFF]">
-                                            <select x-model="paso.rol" class="text-xs text-slate-400 bg-transparent mt-1 focus:outline-none">
-                                                <option value="">Cualquier rol</option>
-                                                <option value="administrador">Administrador</option>
-                                                <option value="gerente">Gerente</option>
-                                                <option value="empleado">Empleado</option>
-                                            </select>
-                                        </div>
-                                        <button @click="eliminarPaso(i)" class="p-1 text-slate-300 hover:text-rose-500 transition-colors">
-                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12" /></svg>
-                                        </button>
-                                    </div>
-                                    <div x-show="i < pasos.length - 1" class="paso-conector"><svg class="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg></div>
-                                </div>
-                            </template>
-                        </div>
-
-                        <button @click="guardarPasos" class="w-full mt-4 py-2.5 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">
-                            Guardar Diseño
-                        </button>
-                    </div>
-                </template>
-            </div>
-
-            <div class="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                <h3 class="text-sm font-semibold text-slate-700 mb-4">Vista Previa del Flujo</h3>
-                <div class="flex flex-col items-center gap-3 py-8">
-                    <template x-for="(paso, i) in pasos" :key="i">
-                        <div class="w-full max-w-md">
-                            <div class="bg-white border-2 border-[#007BFF] rounded-2xl p-5 text-center shadow-lg">
-                                <div class="text-xs font-semibold text-[#007BFF] uppercase tracking-wider mb-1" x-text="'PASO ' + (i+1)"></div>
-                                <div class="text-lg font-bold text-slate-800" x-text="paso.nombre"></div>
-                                <div class="text-xs text-slate-400 mt-1" x-show="paso.rol" x-text="'Responsable: ' + paso.rol"></div>
-                            </div>
-                            <div x-show="i < pasos.length - 1" class="flex justify-center py-1">
-                                <svg class="h-6 w-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
-                            </div>
-                        </div>
-                    </template>
-                    <div x-show="pasos.length === 0" class="text-sm text-slate-400 text-center py-12">
-                        <svg class="h-12 w-12 mx-auto text-slate-200 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
-                        Selecciona un flujo y agrega pasos para comenzar
-                    </div>
+    <main class="flex-1 p-10 mt-16 max-w-[1600px] w-full mx-auto space-y-6" x-data="disenadorApp()">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div class="flex flex-wrap items-end gap-4">
+                <div class="min-w-[260px] flex-1">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Flujo de Trabajo</label>
+                    <select x-model="flujoId" @change="cargarDiseno" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                        <option value="">Seleccionar flujo...</option>
+                        @foreach ($flujos as $flujo)
+                            <option value="{{ $flujo->id }}">{{ $flujo->codigo }} — {{ $flujo->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="min-w-[140px]">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Versión</label>
+                    <input type="text" x-model="diseno.version" placeholder="v1.0" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                </div>
+                <div>
+                    <button @click="guardarDiseno" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-2">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        Guardar Diseño
+                    </button>
                 </div>
             </div>
         </div>
+
+        <template x-if="flujoId">
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+                <div class="xl:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 h-fit relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Pasos</h3>
+                        <span class="text-xs text-slate-400" x-text="pasos.length + ' paso(s)'"></span>
+                    </div>
+
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" x-model="nuevoPasoNombre" @keydown.enter="agregarPaso" placeholder="Nuevo paso..." class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-500">
+                        <button @click="agregarPaso" class="px-3 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shrink-0">+</button>
+                    </div>
+
+                    <div class="space-y-1 max-h-[500px] overflow-y-auto">
+                        <template x-for="(paso, i) in pasos" :key="i">
+                            <div>
+                                <div @click="selectedPaso = i"
+                                     :class="selectedPaso === i ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'"
+                                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-all draggable"
+                                     draggable="true"
+                                     @dragstart="dragIndex = i"
+                                     @dragover.prevent
+                                     @drop="moverPaso(i)">
+                                    <span class="text-xs font-bold text-slate-400 w-5 shrink-0" x-text="i + 1"></span>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-slate-700 truncate" x-text="paso.nombre || 'Sin nombre'"></p>
+                                        <p class="text-[10px] text-slate-400" x-show="paso.asignacion_rol" x-text="'Rol: ' + paso.asignacion_rol"></p>
+                                    </div>
+                                    <button @click.stop="eliminarPaso(i)" class="p-1 text-slate-300 hover:text-rose-500 transition-colors shrink-0">
+                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </div>
+                                <div x-show="i < pasos.length - 1" class="flex justify-center py-0.5">
+                                    <svg class="h-3 w-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div x-show="pasos.length === 0" class="text-xs text-slate-400 text-center py-6">
+                            Agrega pasos para comenzar
+                        </div>
+                    </div>
+                </div>
+
+                <div class="xl:col-span-3 space-y-6">
+                    <template x-if="selectedPaso === null">
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                            <h3 class="text-base font-bold text-slate-700 mb-4">Configuración del Flujo</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Nombre del Flujo</label>
+                                    <input type="text" x-model="flujoNombre" @change="actualizarNombreFlujo" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Disparador / Gatillo</label>
+                                    <select x-model="diseno.trigger_evento" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                        <option value="">Sin disparador automático</option>
+                                        <option value="usuario_registrado">Usuario nuevo registrado</option>
+                                        <option value="documento_subido">Documento PDF cargado</option>
+                                        <option value="tarea_completada">Tarea anterior completada</option>
+                                        <option value="fecha_programada">Fecha programada</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mt-4" x-show="diseno.trigger_evento">
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Descripción del disparador</label>
+                                <textarea x-model="diseno.trigger_descripcion" rows="2" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="Ej: Se dispara cuando un usuario nuevo completa su registro..."></textarea>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="selectedPaso !== null">
+                        <div>
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                                    <h3 class="text-base font-bold text-slate-700">
+                                        <span class="text-blue-600" x-text="'PASO ' + (selectedPaso + 1) + ':'"></span>
+                                        <span x-text="' ' + (pasos[selectedPaso]?.nombre || 'Sin nombre')"></span>
+                                    </h3>
+                                    <span class="text-xs text-slate-400">Bloques 2–5</span>
+                                </div>
+
+                                <div class="p-6 space-y-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nombre de la Tarea</label>
+                                            <input type="text" x-model="pasos[selectedPaso].nombre" placeholder="Ej: Validación OCR" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Descripción / Instrucciones</label>
+                                            <textarea x-model="pasos[selectedPaso].descripcion" rows="2" placeholder="Guía paso a paso para el empleado..." class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Asignación por Equipo / Rol</label>
+                                            <select x-model="pasos[selectedPaso].asignacion_rol" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                                <option value="">Seleccionar rol...</option>
+                                                <option value="super_admin">Super Admin</option>
+                                                <option value="administrador">Administrador</option>
+                                                <option value="gerente">Gerente</option>
+                                                <option value="lider_equipo">Líder de Equipo</option>
+                                                <option value="empleado">Empleado</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Personal Específico (opcional)</label>
+                                            <select x-model="pasos[selectedPaso].asignacion_usuario_id" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                                <option value="">Cualquier usuario del rol</option>
+                                                @foreach(\App\Models\User::all() as $user)
+                                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Fecha Límite Dinámica</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="number" x-model="pasos[selectedPaso].fecha_limite_horas" placeholder="48" class="w-24 rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                                <span class="text-sm text-slate-500">horas después de activación</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Prioridad de la Tarea</label>
+                                            <select x-model="pasos[selectedPaso].prioridad" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                                <option value="baja">Baja</option>
+                                                <option value="media">Media</option>
+                                                <option value="alta">Alta</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="pb-2">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Checklist de Pasos Internos</label>
+                                            <button @click="agregarChecklistItem" class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4" /></svg>
+                                                Agregar item
+                                            </button>
+                                        </div>
+                                        <div class="space-y-2 mb-4">
+                                            <template x-for="(item, ci) in (pasos[selectedPaso].checklist || [])" :key="ci">
+                                                <div class="flex items-center gap-3 bg-slate-50 rounded-lg px-4 py-2 border border-slate-100">
+                                                    <input type="checkbox" disabled class="rounded border-slate-300 text-blue-600 shrink-0">
+                                                    <input type="text" x-model="pasos[selectedPaso].checklist[ci].item" placeholder="Describa el paso de verificación..." class="flex-1 bg-transparent text-sm text-slate-700 focus:outline-none border-b border-transparent focus:border-blue-500">
+                                                    <button @click="eliminarChecklistItem(ci)" class="p-1 text-slate-300 hover:text-rose-500 transition-colors shrink-0">
+                                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    </button>
+                                                </div>
+                                            </template>
+                                            <div x-show="!pasos[selectedPaso].checklist || pasos[selectedPaso].checklist.length === 0" class="text-xs text-slate-400 italic">Sin items de checklist</div>
+                                        </div>
+
+                                        <div class="pt-4 border-t border-slate-100">
+                                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-3">Flujo de Estado del Borrador (Transiciones)</label>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div class="flex items-center gap-3 bg-emerald-50 rounded-lg px-4 py-3 border border-emerald-200">
+                                                    <svg class="h-4 w-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7" /></svg>
+                                                    <span class="text-xs font-semibold text-slate-600 w-20">Al aprobar →</span>
+                                                    <select x-model="pasos[selectedPaso].transicion_aprobado" class="flex-1 rounded-lg border-emerald-200 bg-white text-sm text-slate-700 px-3 py-1.5 border focus:ring-2 focus:ring-emerald-500 outline-none">
+                                                        <option value="">Sin transición</option>
+                                                        <template x-for="(p, pi) in pasos" :key="pi">
+                                                            <option :value="pi" x-show="pi !== selectedPaso" x-text="'Paso ' + (pi+1) + ': ' + (p.nombre || 'Sin nombre')"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                                <div class="flex items-center gap-3 bg-rose-50 rounded-lg px-4 py-3 border border-rose-200">
+                                                    <svg class="h-4 w-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    <span class="text-xs font-semibold text-slate-600 w-20">Al rechazar →</span>
+                                                    <select x-model="pasos[selectedPaso].transicion_rechazado" class="flex-1 rounded-lg border-rose-200 bg-white text-sm text-slate-700 px-3 py-1.5 border focus:ring-2 focus:ring-rose-500 outline-none">
+                                                        <option value="">Sin transición</option>
+                                                        <template x-for="(p, pi) in pasos" :key="pi">
+                                                            <option :value="pi" x-show="pi !== selectedPaso" x-text="'Paso ' + (pi+1) + ': ' + (p.nombre || 'Sin nombre')"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div class="flex justify-end gap-3">
+                        <button @click="publicarFlujo" class="px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" /></svg>
+                            Publicar en Producción
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
     </main>
 </div>
 
@@ -127,22 +273,61 @@
     function disenadorApp() {
         return {
             flujoId: '',
+            flujoNombre: '',
             pasos: [],
+            diseno: { version: 'v1.0', trigger_evento: '', trigger_descripcion: '' },
             nuevoPasoNombre: '',
+            selectedPaso: null,
             dragIndex: null,
             csrf: '{{ csrf_token() }}',
+            flujoNombres: { @foreach($flujos as $f) '{{ $f->id }}': '{{ $f->nombre }}', @endforeach },
 
-            cargarPasos() {
-                if (!this.flujoId) { this.pasos = []; return; }
+            cargarDiseno() {
+                if (!this.flujoId) { this.pasos = []; this.diseno = { version: 'v1.0', trigger_evento: '', trigger_descripcion: '' }; this.selectedPaso = null; return; }
+                this.flujoNombre = this.flujoNombres[this.flujoId] || '';
                 fetch(`{{ url('/disenador') }}/${this.flujoId}/pasos`)
-                    .then(r => r.json()).then(d => { this.pasos = d.pasos || []; });
+                    .then(r => r.json()).then(d => {
+                        this.pasos = d.pasos || [];
+                        this.diseno = d.diseno || { version: 'v1.0', trigger_evento: '', trigger_descripcion: '' };
+                        if (!this.diseno.version) this.diseno.version = 'v1.0';
+                        this.selectedPaso = this.pasos.length > 0 ? 0 : null;
+                    });
             },
+
+            actualizarNombreFlujo() {
+                if (!this.flujoId) return;
+                fetch(`{{ url('/flujos-trabajo') }}/${this.flujoId}`, {
+                    method: 'PUT',
+                    headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ nombre: this.flujoNombre, departamento: '', estado: 'Activo' })
+                }).then(r => r.json()).then(() => {
+                    this.flujoNombres[this.flujoId] = this.flujoNombre;
+                });
+            },
+
             agregarPaso() {
                 if (!this.nuevoPasoNombre.trim()) return;
-                this.pasos.push({ nombre: this.nuevoPasoNombre, rol: '' });
+                this.pasos.push({
+                    nombre: this.nuevoPasoNombre,
+                    descripcion: '',
+                    asignacion_rol: '',
+                    asignacion_usuario_id: '',
+                    fecha_limite_horas: '',
+                    prioridad: 'media',
+                    checklist: [],
+                    transicion_aprobado: '',
+                    transicion_rechazado: ''
+                });
                 this.nuevoPasoNombre = '';
+                this.selectedPaso = this.pasos.length - 1;
             },
-            eliminarPaso(i) { this.pasos.splice(i, 1); },
+
+            eliminarPaso(i) {
+                this.pasos.splice(i, 1);
+                if (this.selectedPaso === i) this.selectedPaso = null;
+                else if (this.selectedPaso > i) this.selectedPaso--;
+            },
+
             moverPaso(i) {
                 if (this.dragIndex === null || this.dragIndex === i) return;
                 const arr = this.pasos;
@@ -150,13 +335,35 @@
                 arr.splice(i, 0, el);
                 this.dragIndex = null;
             },
-            guardarPasos() {
+
+            agregarChecklistItem() {
+                if (!this.pasos[this.selectedPaso].checklist) this.pasos[this.selectedPaso].checklist = [];
+                this.pasos[this.selectedPaso].checklist.push({ item: '' });
+            },
+
+            eliminarChecklistItem(i) {
+                this.pasos[this.selectedPaso].checklist.splice(i, 1);
+            },
+
+            guardarDiseno() {
                 if (!this.flujoId) return;
                 fetch(`{{ url('/disenador') }}/${this.flujoId}/pasos`, {
                     method: 'PUT',
                     headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pasos: JSON.stringify(this.pasos) })
-                }).then(r => r.json()).then(d => { if (d.success) alert('Diseño guardado correctamente.'); });
+                    body: JSON.stringify({
+                        pasos: JSON.stringify(this.pasos),
+                        diseno: JSON.stringify(this.diseno)
+                    })
+                }).then(r => r.json()).then(d => {
+                    if (d.success) alert('Diseño guardado correctamente.');
+                });
+            },
+
+            publicarFlujo() {
+                if (!this.flujoId) return;
+                if (!confirm('¿Estás seguro de publicar este flujo en producción? Una vez publicado, estará disponible para todos los usuarios.')) return;
+                this.diseno.publicado = true;
+                this.guardarDiseno();
             }
         };
     }

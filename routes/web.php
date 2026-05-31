@@ -27,7 +27,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/editar_perfil', [ProfileController::class, 'edit'])->name('perfil.edit');
     Route::put('/perfil/actualizar', [ProfileController::class, 'update'])->name('perfil.update');
 
-    Route::get('/flujos', function () { return view('flujos'); })->name('flujos');
+    Route::get('/flujos', [FlujoTrabajoController::class, 'showTimeline'])->name('flujos');
     Route::resource('flujos-trabajo', FlujoTrabajoController::class);
 
     Route::get('/auditoria', [AuditoriaController::class, 'index'])->name('auditoria');
