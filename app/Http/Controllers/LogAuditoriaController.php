@@ -10,6 +10,12 @@ class LogAuditoriaController extends Controller
 {
     public function index(Request $request): View
     {
+        $user = $request->user();
+
+        if (!$user || !in_array($user->role?->slug, ['super_admin', 'administrador'])) {
+            abort(403, 'No tienes permiso para acceder a esta sección.');
+        }
+
         $query = LogAuditoria::with('user')->orderByDesc('created_at');
 
         if ($request->filled('accion')) {

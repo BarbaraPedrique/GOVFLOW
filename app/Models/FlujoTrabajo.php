@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FlujoTrabajo extends Model
 {
@@ -37,6 +38,11 @@ class FlujoTrabajo extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function estados(): HasMany
+    {
+        return $this->hasMany(FlujoEstado::class, 'flujo_trabajo_id')->orderBy('orden');
     }
 
     public function getCompletadoATiempoAttribute(): ?bool

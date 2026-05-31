@@ -3,78 +3,98 @@
 namespace App\Http\Controllers;
 
 use App\Models\FlujoTrabajo;
+use App\Models\LogAuditoria;
+use App\Models\Role;
+use App\Models\Tarea;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class AuditoriaController extends Controller
 {
+    private const HIERARCHY = [
+        'super_admin'   => 1,
+        'administrador' => 2,
+        'gerente'       => 3,
+        'lider_equipo'  => 4,
+        'empleado'      => 5,
+    ];
+
     public function index(Request $request)
     {
-        $periodo = $request->get('periodo', 'mensual');
+        $user = $request->user();
+        $query = LogAuditoria::with('user');
 
-        $eficienciaMensual = FlujoTrabajo::whereNotNull('fecha_completado')
-            ->whereNotNull('fecha_limite')
-            ->select(
-                DB::raw("DATE_FORMAT(fecha_completado, '%Y-%m') as mes"),
-                DB::raw('COUNT(*) as total'),
-                DB::raw("SUM(CASE WHEN fecha_completado <= fecha_limite THEN 1 ELSE 0 END) as a_tiempo"),
-                DB::raw("SUM(CASE WHEN fecha_completado > fecha_limite THEN 1 ELSE 0 END) as vencidas")
-            )
-            ->groupBy('mes')
-            ->orderBy('mes')
-            ->get()
-            ->map(function ($item) {
-                $item->eficiencia = $item->total > 0
-                    ? round(($item->a_tiempo / $item->total) * 100, 1)
-                    : 0;
-                return $item;
+        $userRank = $user ? (self::HIERARCHY[$user->role?->slug] ?? 99) : 99;
+
+        if ($userRank >= 3) {
+            $visibleSlugs = array_keys(array_filter(self::HIERARCHY, fn($r) => $r >= $userRank));
+            $visibleUserIds = User::whereIn('role_id', Role::whereIn('slug', $visibleSlugs)->pluck('id'))->pluck('id');
+            $query->whereIn('user_id', $visibleUserIds);
+        }
+
+        if ($request->filled('flujo_id')) {
+            $query->where('entidad_type', 'App\Models\FlujoTrabajo')
+                  ->where('entidad_id', $request->flujo_id);
+        }
+
+        if ($request->filled('departamento')) {
+            $flujoIds = FlujoTrabajo::where('departamento', $request->departamento)->pluck('id');
+            $query->where(function ($q) use ($flujoIds) {
+                $q->whereIn('entidad_id', $flujoIds)
+                  ->where('entidad_type', 'App\Models\FlujoTrabajo');
             });
+        }
 
-        $eficienciaPorDepartamento = FlujoTrabajo::whereNotNull('fecha_completado')
-            ->whereNotNull('fecha_limite')
-            ->select(
-                'departamento',
-                DB::raw('COUNT(*) as total'),
-                DB::raw("SUM(CASE WHEN fecha_completado <= fecha_limite THEN 1 ELSE 0 END) as a_tiempo"),
-                DB::raw("SUM(CASE WHEN fecha_completado > fecha_limite THEN 1 ELSE 0 END) as vencidas")
-            )
-            ->groupBy('departamento')
-            ->get()
-            ->map(function ($item) {
-                $item->eficiencia = $item->total > 0
-                    ? round(($item->a_tiempo / $item->total) * 100, 1)
-                    : 0;
-                return $item;
-            });
+        if ($request->filled('fecha_desde')) {
+            $query->whereDate('created_at', '>=', $request->fecha_desde);
+        }
 
-        $totalFlujos = FlujoTrabajo::count();
-        $completados = FlujoTrabajo::where('estado', 'Completado')->count();
-        $tasaCompletitud = $totalFlujos > 0 ? round(($completados / $totalFlujos) * 100, 1) : 0;
+        if ($request->filled('fecha_hasta')) {
+            $query->whereDate('created_at', '<=', $request->fecha_hasta);
+        }
 
-        $tasaEficienciaGlobal = FlujoTrabajo::whereNotNull('fecha_completado')
-            ->whereNotNull('fecha_limite')
-            ->selectRaw("SUM(CASE WHEN fecha_completado <= fecha_limite THEN 1 ELSE 0 END) as a_tiempo")
-            ->selectRaw("COUNT(*) as total")
-            ->first();
-        $eficienciaGlobal = $tasaEficienciaGlobal->total > 0
-            ? round(($tasaEficienciaGlobal->a_tiempo / $tasaEficienciaGlobal->total) * 100, 1)
-            : 0;
+        $logs = $query->latest('created_at')->get();
 
-        $flujosRecientes = FlujoTrabajo::whereNotNull('fecha_completado')
-            ->with('user')
-            ->orderByDesc('fecha_completado')
-            ->limit(10)
-            ->get();
+        $grupos = $logs->groupBy(function ($log) {
+            return $log->entidad_type . '::' . ($log->entidad_id ?? '0');
+        })->map(function ($items, $key) {
+            $parts = explode('::', $key);
+            $type = $parts[0];
+            $id = $parts[1] !== '0' ? $parts[1] : null;
+            $entityName = $id ? $this->resolveEntityName($type, $id) : 'Sistema';
+            $entityShort = class_basename($type);
+
+            return (object) [
+                'entity_name'  => $entityName,
+                'entity_type'  => $entityShort,
+                'entity_id'    => $id,
+                'logs'         => $items,
+                'cantidad'     => $items->count(),
+                'ultimo'       => $items->first()->created_at,
+            ];
+        })->sortByDesc(fn ($g) => $g->ultimo);
+
+        $flujos = FlujoTrabajo::orderBy('nombre')->get();
+        $departamentos = FlujoTrabajo::distinct()->pluck('departamento')->sort();
+        $totalEventos = $logs->count();
+        $proyectosActivos = $grupos->count();
+        $userRank = $userRank;
 
         return view('auditoria', compact(
-            'eficienciaMensual',
-            'eficienciaPorDepartamento',
-            'totalFlujos',
-            'completados',
-            'tasaCompletitud',
-            'eficienciaGlobal',
-            'flujosRecientes',
-            'periodo'
+            'grupos', 'flujos', 'departamentos',
+            'totalEventos', 'proyectosActivos', 'userRank'
         ));
+    }
+
+    private function resolveEntityName(string $type, ?string $id): string
+    {
+        if (!$id) return 'Sistema';
+
+        return match ($type) {
+            'App\Models\FlujoTrabajo' => FlujoTrabajo::find($id)?->nombre ?? "Flujo #$id",
+            'App\Models\Tarea'        => Tarea::find($id)?->titulo ?? "Tarea #$id",
+            'App\Models\User'         => User::find($id)?->name ?? "Usuario #$id",
+            default                   => class_basename($type) . " #$id",
+        };
     }
 }

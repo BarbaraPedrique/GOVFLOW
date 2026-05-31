@@ -22,8 +22,12 @@
             <a href="{{ route('horarios.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> Horarios</a>
             <a href="{{ route('flujos') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> Flujos de Trabajo</a>
             <a href="{{ route('auditoria') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#007BFF] bg-blue-50 rounded-xl transition-colors"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> Auditoría</a>
+            @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador']))
             <a href="{{ route('logs.auditoria') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> Logs Auditoría</a>
-            <a href="{{ route('disenador') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg> Diseñador</a>
+            @endif
+            @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador']))
+        <a href="{{ route('disenador') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg> Diseñador</a>
+        @endif
         </nav>
     </aside>
 
@@ -52,10 +56,21 @@
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Flujos</p>
-                            <p class="text-3xl font-bold text-slate-800 mt-1">{{ $totalFlujos }}</p>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Eventos</p>
+                            <p class="text-3xl font-bold text-slate-800 mt-1">{{ $totalEventos }}</p>
                         </div>
                         <div class="p-3 bg-blue-50 text-[#007BFF] rounded-xl">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Proyectos / Flujos</p>
+                            <p class="text-3xl font-bold text-slate-800 mt-1">{{ $proyectosActivos }}</p>
+                        </div>
+                        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                         </div>
                     </div>
@@ -63,155 +78,167 @@
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Completados</p>
-                            <p class="text-3xl font-bold text-slate-800 mt-1">{{ $completados }}</p>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Usuarios Activos</p>
+                            <p class="text-3xl font-bold text-slate-800 mt-1">{{ $grupos->pluck('logs')->flatten()->pluck('user_id')->unique()->count() }}</p>
                         </div>
-                        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>
                         </div>
                     </div>
                 </div>
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tasa Completitud</p>
-                            <p class="text-3xl font-bold text-slate-800 mt-1">{{ $tasaCompletitud }}%</p>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Eventos / Proyecto</p>
+                            <p class="text-3xl font-bold text-slate-800 mt-1">{{ $proyectosActivos > 0 ? round($totalEventos / $proyectosActivos, 1) : 0 }}</p>
                         </div>
-                        <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
                         </div>
                     </div>
                 </div>
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Eficiencia Global</p>
-                            <p class="text-3xl font-bold {{ $eficienciaGlobal >= 80 ? 'text-emerald-600' : ($eficienciaGlobal >= 50 ? 'text-amber-600' : 'text-rose-600') }} mt-1">{{ $eficienciaGlobal }}%</p>
-                        </div>
-                        <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="px-8 py-5 border-b border-slate-100">
-                        <h3 class="text-lg font-semibold text-slate-800">Eficiencia por Departamento</h3>
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <form method="GET" action="{{ route('auditoria') }}" class="flex flex-wrap items-end gap-4">
+                    <div class="min-w-[200px] flex-1">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Proyecto / Flujo</label>
+                        <select name="flujo_id" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                            <option value="">Todos los proyectos</option>
+                            @foreach($flujos as $flujo)
+                                <option value="{{ $flujo->id }}" {{ request('flujo_id') == $flujo->id ? 'selected' : '' }}>{{ $flujo->codigo }} — {{ $flujo->nombre }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div class="p-8">
-                        @if ($eficienciaPorDepartamento->count() > 0)
-                            <div class="space-y-5">
-                                @foreach ($eficienciaPorDepartamento as $depto)
-                                    @php
-                                        $color = $depto->eficiencia >= 80 ? 'bg-emerald-500' : ($depto->eficiencia >= 50 ? 'bg-amber-500' : 'bg-rose-500');
-                                    @endphp
+                    <div class="min-w-[180px] flex-1">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Equipo / Departamento</label>
+                        <select name="departamento" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                            <option value="">Todos los equipos</option>
+                            @foreach($departamentos as $depto)
+                                <option value="{{ $depto }}" {{ request('departamento') == $depto ? 'selected' : '' }}>{{ $depto }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="min-w-[160px]">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Desde</label>
+                        <input type="date" name="fecha_desde" value="{{ request('fecha_desde') }}" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                    </div>
+                    <div class="min-w-[160px]">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Hasta</label>
+                        <input type="date" name="fecha_hasta" value="{{ request('fecha_hasta') }}" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="px-5 py-2.5 bg-[#007BFF] text-white text-sm font-semibold rounded-xl hover:bg-blue-600 transition-colors">Filtrar</button>
+                        <a href="{{ route('auditoria') }}" class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-colors">Limpiar</a>
+                    </div>
+                </form>
+            </div>
+
+            @if($grupos->isEmpty())
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-16 text-center">
+                    <svg class="h-16 w-16 text-slate-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    <h3 class="text-lg font-semibold text-slate-600 mb-1">Sin eventos de auditoría</h3>
+                    <p class="text-slate-400 text-sm">No se encontraron registros con los filtros aplicados.</p>
+                </div>
+            @else
+                <div class="space-y-6">
+                    @foreach($grupos as $grupo)
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" x-data="{ open: true }">
+                            <button @click="open = !open" class="w-full px-8 py-5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left">
+                                <div class="flex items-center gap-4">
+                                    <div class="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                    </div>
                                     <div>
-                                        <div class="flex justify-between items-center mb-1.5">
-                                            <span class="text-sm font-medium text-slate-700">{{ $depto->departamento }}</span>
-                                            <span class="text-sm font-semibold text-slate-700">{{ $depto->eficiencia }}%</span>
-                                        </div>
-                                        <div class="bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                                            <div class="{{ $color }} h-2.5 rounded-full transition-all" style="width: {{ $depto->eficiencia }}%"></div>
-                                        </div>
-                                        <div class="flex justify-between mt-1">
-                                            <span class="text-xs text-slate-400">{{ $depto->a_tiempo }} a tiempo</span>
-                                            <span class="text-xs text-slate-400">{{ $depto->vencidas }} vencidas</span>
+                                        <h3 class="text-base font-semibold text-slate-800">{{ $grupo->entity_name }}</h3>
+                                        <div class="flex items-center gap-3 mt-0.5">
+                                            <span class="text-xs text-slate-400">{{ $grupo->entity_type }}</span>
+                                            <span class="text-xs text-slate-300">•</span>
+                                            <span class="text-xs font-medium text-blue-600">{{ $grupo->cantidad }} evento(s)</span>
+                                            <span class="text-xs text-slate-300">•</span>
+                                            <span class="text-xs text-slate-400">Último: {{ $grupo->ultimo->format('d/m/Y H:i') }}</span>
                                         </div>
                                     </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <p class="text-sm text-slate-400 text-center py-4">No hay datos por departamento.</p>
-                        @endif
-                    </div>
-                </div>
+                                </div>
+                                <svg class="h-5 w-5 text-slate-400 transition-transform shrink-0" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7" /></svg>
+                            </button>
 
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="px-8 py-5 border-b border-slate-100">
-                        <h3 class="text-lg font-semibold text-slate-800">Eficiencia Mensual</h3>
-                    </div>
-                    <div class="p-8">
-                        @if ($eficienciaMensual->count() > 0)
-                            <div class="space-y-4">
-                                @foreach ($eficienciaMensual as $item)
-                                    @php
-                                        $fecha = \Carbon\Carbon::createFromFormat('Y-m', $item->mes);
-                                        $color = $item->eficiencia >= 80 ? 'bg-emerald-500' : ($item->eficiencia >= 50 ? 'bg-amber-500' : 'bg-rose-500');
-                                    @endphp
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-28 text-sm font-medium text-slate-700">{{ $fecha->locale('es')->isoFormat('MMM Y') }}</div>
-                                        <div class="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
-                                            <div class="{{ $color }} h-3 rounded-full transition-all" style="width: {{ $item->eficiencia }}%"></div>
-                                        </div>
-                                        <div class="w-16 text-right text-sm font-semibold text-slate-700">{{ $item->eficiencia }}%</div>
-                                        <div class="w-28 text-right text-xs text-slate-400">{{ $item->a_tiempo }}/{{ $item->total }}</div>
+                            <div x-show="open" x-collapse>
+                                <div class="border-t border-slate-100">
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-sm">
+                                            <thead>
+                                                <tr class="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                                    <th class="px-8 py-4 w-1/6">Quién</th>
+                                                    <th class="px-8 py-4 w-1/6">Cuándo</th>
+                                                    <th class="px-8 py-4 w-1/6">Qué hizo</th>
+                                                    <th class="px-8 py-4 w-1/6">Sobre qué</th>
+                                                    <th class="px-8 py-4 w-1/3">Qué cambió</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100">
+                                                @foreach($grupo->logs as $log)
+                                                    <tr class="hover:bg-slate-50 transition-colors">
+                                                        <td class="px-8 py-4">
+                                                            <div class="flex items-center gap-2">
+                                                                <img src="{{ $log->user?->foto ? asset('storage/'.$log->user->foto) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&q=80' }}" class="h-7 w-7 rounded-full object-cover shrink-0">
+                                                                <span class="font-medium text-slate-700">{{ $log->user?->name ?? 'Sistema' }}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td class="px-8 py-4 text-slate-500 whitespace-nowrap">
+                                                            <span class="text-xs">{{ $log->created_at->format('d/m/Y') }}</span>
+                                                            <span class="text-xs text-slate-400 ml-1">{{ $log->created_at->format('H:i') }}</span>
+                                                        </td>
+                                                        <td class="px-8 py-4">
+                                                            @php
+                                                                $accionColor = match($log->accion) {
+                                                                    'crear' => 'text-emerald-700 bg-emerald-50',
+                                                                    'actualizar', 'update' => 'text-blue-700 bg-blue-50',
+                                                                    'eliminar', 'delete' => 'text-rose-700 bg-rose-50',
+                                                                    default => 'text-slate-700 bg-slate-100'
+                                                                };
+                                                            @endphp
+                                                            <span class="inline-block text-xs font-semibold px-2.5 py-1 rounded-full {{ $accionColor }}">{{ ucfirst($log->accion) }}</span>
+                                                        </td>
+                                                        <td class="px-8 py-4 text-slate-500 text-xs">{{ $log->descripcion }}</td>
+                                                        <td class="px-8 py-4">
+                                                            @if($log->metadata && is_array($log->metadata) && count($log->metadata) > 0)
+                                                                <div class="space-y-1">
+                                                                    @foreach($log->metadata as $campo => $valor)
+                                                                        @if(is_array($valor) && isset($valor['old']) && isset($valor['new']))
+                                                                            <div class="flex items-start gap-2 text-xs">
+                                                                                <span class="font-medium text-slate-600 shrink-0">{{ $campo }}:</span>
+                                                                                <div class="flex flex-wrap items-center gap-1">
+                                                                                    <span class="line-through text-rose-500">{{ $valor['old'] ?? '' }}</span>
+                                                                                    <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                                                                    <span class="text-emerald-600 font-medium">{{ $valor['new'] ?? '' }}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        @elseif(is_string($campo))
+                                                                            <div class="text-xs text-slate-500">
+                                                                                <span class="font-medium text-slate-600">{{ $campo }}:</span>
+                                                                                <span>{{ is_string($valor) ? $valor : json_encode($valor) }}</span>
+                                                                            </div>
+                                                                        @endif
+                                                                    @endforeach
+                                                                </div>
+                                                            @elseif($log->metadata)
+                                                                <span class="text-xs text-slate-400 italic">{{ is_string($log->metadata) ? $log->metadata : 'Sin detalles' }}</span>
+                                                            @else
+                                                                <span class="text-xs text-slate-400 italic">Sin cambios registrados</span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
                                     </div>
-                                @endforeach
+                                </div>
                             </div>
-                        @else
-                            <p class="text-sm text-slate-400 text-center py-4">No hay datos mensuales.</p>
-                        @endif
-                    </div>
+                        </div>
+                    @endforeach
                 </div>
-
-            </div>
-
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-8 py-5 border-b border-slate-100 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-slate-800">Flujos Completados Recientes</h3>
-                    <span class="text-xs font-medium text-slate-400">{{ $flujosRecientes->count() }} registros</span>
-                </div>
-                <div class="overflow-x-auto">
-                    @if ($flujosRecientes->count() > 0)
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                    <th class="px-8 py-4">Código</th>
-                                    <th class="px-8 py-4">Nombre</th>
-                                    <th class="px-8 py-4">Departamento</th>
-                                    <th class="px-8 py-4">Responsable</th>
-                                    <th class="px-8 py-4">Fecha Límite</th>
-                                    <th class="px-8 py-4">Completado</th>
-                                    <th class="px-8 py-4">Resultado</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                @foreach ($flujosRecientes as $flujo)
-                                    @php $aTiempo = $flujo->completado_a_tiempo; @endphp
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="px-8 py-4 font-mono text-xs font-semibold text-slate-800">{{ $flujo->codigo }}</td>
-                                        <td class="px-8 py-4 font-medium text-slate-800">{{ $flujo->nombre }}</td>
-                                        <td class="px-8 py-4 text-slate-500">{{ $flujo->departamento }}</td>
-                                        <td class="px-8 py-4 text-slate-500">{{ $flujo->user?->name ?? '—' }}</td>
-                                        <td class="px-8 py-4 text-slate-500">{{ $flujo->fecha_limite?->isoFormat('DD/MM/YYYY') ?? '—' }}</td>
-                                        <td class="px-8 py-4 text-slate-500">{{ $flujo->fecha_completado?->isoFormat('DD/MM/YYYY') ?? '—' }}</td>
-                                        <td class="px-8 py-4">
-                                            @if ($aTiempo === true)
-                                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-                                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4" /></svg>
-                                                    A tiempo
-                                                </span>
-                                            @elseif ($aTiempo === false)
-                                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full">
-                                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M6 18L18 6M6 6l12 12" /></svg>
-                                                    Vencido
-                                                </span>
-                                            @else
-                                                <span class="text-xs text-slate-400">—</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @else
-                        <p class="text-sm text-slate-400 text-center py-8">No hay flujos completados aún.</p>
-                    @endif
-                </div>
-            </div>
+            @endif
 
         </main>
     </div>
