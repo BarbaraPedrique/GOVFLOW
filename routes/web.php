@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisenadorController;
+use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\FlujoTrabajoController;
 use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\LogAuditoriaController;
@@ -52,6 +53,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/disenador', [DisenadorController::class, 'index'])->name('disenador');
     Route::put('/disenador/{flujo}/pasos', [DisenadorController::class, 'guardarPasos'])->name('disenador.guardar');
     Route::get('/disenador/{flujo}/pasos', [DisenadorController::class, 'obtenerPasos'])->name('disenador.pasos');
+
+    Route::resource('equipos', EquipoController::class)->except(['show']);
 });
 
 Route::fallback(function () { return redirect('/'); });

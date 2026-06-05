@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -50,6 +52,28 @@ class User extends Authenticatable
     public function flujosTrabajo()
     {
         return $this->hasMany(FlujoTrabajo::class);
+    }
+
+    public function equipos(): BelongsToMany
+    {
+        return $this->belongsToMany(Equipo::class, 'equipo_user')
+            ->withPivot('rol')
+            ->withTimestamps();
+    }
+
+    public function equiposComoLider(): BelongsToMany
+    {
+        return $this->equipos()->wherePivot('rol', 'lider_equipo');
+    }
+
+    public function equiposComoEmpleado(): BelongsToMany
+    {
+        return $this->equipos()->wherePivot('rol', 'empleado');
+    }
+
+    public function equiposDirigidos(): HasMany
+    {
+        return $this->hasMany(Equipo::class, 'gerente_id');
     }
 
     public function isAdmin(): bool

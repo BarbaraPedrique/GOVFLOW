@@ -21,6 +21,8 @@
         <a href="{{ route('tareas.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#007BFF] bg-blue-50 rounded-xl transition-colors"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg> Tareas</a>
         <a href="{{ route('horarios.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> Horarios</a>
         <a href="{{ route('flujos') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> Flujos de Trabajo</a>
+        <a href="{{ route('equipos.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> Equipos</a>
+        <a href="{{ route('equipos.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> Equipos</a>
         <a href="{{ route('auditoria') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> Auditoría</a>
         @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador']))
             <a href="{{ route('logs.auditoria') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> Logs Auditoría</a>
@@ -116,6 +118,15 @@
                         <input type="text" x-model="nuevaTarea.categoria" placeholder="Ej: Desarrollo" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm w-32">
                     </div>
                     <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Equipo</label>
+                        <select x-model="nuevaTarea.equipo_id" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white min-w-[140px]">
+                            <option value="">Sin equipo</option>
+                            @foreach($equipos as $equipo)
+                                <option value="{{ $equipo->id }}">{{ $equipo->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Vence</label>
                         <input type="date" x-model="nuevaTarea.fecha_vencimiento" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
                     </div>
@@ -141,6 +152,7 @@
                                             <p class="text-sm font-medium text-slate-800" x-text="tarea.titulo"></p>
                                             <p class="text-xs text-slate-400 mt-1" x-show="tarea.categoria" x-text="tarea.categoria"></p>
                                             <p class="text-xs text-slate-400 mt-0.5" x-show="tarea.fecha_vencimiento" x-text="'Vence: '+new Date(tarea.fecha_vencimiento+'T00:00:00').toLocaleDateString('es-ES')"></p>
+                                            <p class="text-xs text-slate-400 mt-0.5" x-show="tarea.equipo?.nombre" x-text="'📋 ' + tarea.equipo.nombre"></p>
                                         </div>
                                         <div class="flex items-center gap-1 flex-shrink-0">
                                             <button @click="toggleCompletada(tarea)" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-emerald-600 transition-colors" title="Completar">
@@ -184,7 +196,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.store('tareas', @json($tareas->flatten(1)->values() ?? []));
 
     Alpine.data('tareasApp', () => ({
-        nuevaTarea: { titulo: '', prioridad: 'media', categoria: '', fecha_vencimiento: '' },
+        nuevaTarea: { titulo: '', prioridad: 'media', categoria: '', fecha_vencimiento: '', equipo_id: '' },
         dragTarea: null,
         csrf: '{{ csrf_token() }}',
 
@@ -194,6 +206,7 @@ document.addEventListener('alpine:init', () => {
             form.append('prioridad', this.nuevaTarea.prioridad);
             form.append('categoria', this.nuevaTarea.categoria);
             form.append('fecha_vencimiento', this.nuevaTarea.fecha_vencimiento);
+            form.append('equipo_id', this.nuevaTarea.equipo_id);
 
             fetch('{{ route('tareas.store') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': this.csrf }, body: form })
                 .then(r => r.redirected ? window.location.href = r.url : r.json())
