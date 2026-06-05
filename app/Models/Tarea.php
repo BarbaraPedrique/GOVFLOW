@@ -11,6 +11,7 @@ class Tarea extends Model
 
     protected $fillable = [
         'user_id',
+        'equipo_id',
         'titulo',
         'descripcion',
         'prioridad',
@@ -32,6 +33,11 @@ class Tarea extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function equipo(): BelongsTo
+    {
+        return $this->belongsTo(Equipo::class);
     }
 
     public function scopePorPrioridad($query)
