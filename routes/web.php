@@ -11,6 +11,7 @@ use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\LogAuditoriaController;
 use App\Http\Controllers\NotificacionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SolicitudClienteController;
 use App\Http\Controllers\TareaController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,7 +27,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/perfil', [ProfileController::class, 'show'])->name('perfil');
     Route::get('/editar_perfil', [ProfileController::class, 'edit'])->name('perfil.edit');
-    Route::put('/perfil/actualizar', [ProfileController::class, 'update'])->name('perfil.update');
+    Route::post('/perfil/actualizar', [ProfileController::class, 'update'])->name('perfil.update');
 
     Route::get('/flujos', [FlujoTrabajoController::class, 'showTimeline'])->name('flujos');
     Route::resource('flujos-trabajo', FlujoTrabajoController::class);
@@ -44,6 +45,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/horarios/{horario}', [HorarioController::class, 'update'])->name('horarios.update');
     Route::delete('/horarios/{horario}', [HorarioController::class, 'destroy'])->name('horarios.destroy');
 
+    Route::post('/solicitar', [SolicitudClienteController::class, 'store'])->name('solicitar.store');
+    Route::get('/solicitudes', [SolicitudClienteController::class, 'misSolicitudes'])->name('solicitudes.mis');
+    Route::post('/solicitudes/{tarea}/aprobar', [SolicitudClienteController::class, 'aprobarSolicitud'])->name('solicitudes.aprobar');
+    Route::post('/solicitudes/{tarea}/rechazar', [SolicitudClienteController::class, 'rechazarSolicitud'])->name('solicitudes.rechazar');
+
     Route::get('/notificaciones', [NotificacionController::class, 'index'])->name('notificaciones.index');
     Route::post('/notificaciones/{notificacion}/leido', [NotificacionController::class, 'marcarLeido'])->name('notificaciones.leido');
     Route::post('/notificaciones/marcar-todas', [NotificacionController::class, 'marcarTodasLeido'])->name('notificaciones.marcar-todas');
@@ -55,6 +61,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/disenador/{flujo}/pasos', [DisenadorController::class, 'obtenerPasos'])->name('disenador.pasos');
 
     Route::resource('equipos', EquipoController::class)->except(['show']);
+
+    Route::prefix('admin')->middleware('auth')->group(function () {
+        Route::get('/solicitudes', [\App\Http\Controllers\AdminSolicitudController::class, 'index'])->name('admin.solicitudes');
+        Route::post('/solicitudes/{user}/aprobar', [\App\Http\Controllers\AdminSolicitudController::class, 'aprobar'])->name('admin.solicitudes.aprobar');
+        Route::post('/solicitudes/{user}/rechazar', [\App\Http\Controllers\AdminSolicitudController::class, 'rechazar'])->name('admin.solicitudes.rechazar');
+        Route::post('/solicitudes/tarea/{tarea}/aprobar', [\App\Http\Controllers\AdminSolicitudController::class, 'aprobarTarea'])->name('admin.solicitudes.aprobar-tarea');
+        Route::post('/solicitudes/tarea/{tarea}/rechazar', [\App\Http\Controllers\AdminSolicitudController::class, 'rechazarTarea'])->name('admin.solicitudes.rechazar-tarea');
+    });
 });
 
 Route::fallback(function () { return redirect('/'); });

@@ -28,6 +28,8 @@ class HorarioController extends Controller
 
             $tareasDelDia = $tareas->filter(function ($t) use ($i) {
                 return $t->fecha_vencimiento && (int) $t->fecha_vencimiento->format('N') - 1 === $i;
+            })->reject(function ($t) {
+                return $t->categoria === 'Horario';
             })->map(function ($t) use ($coloresPrioridad) {
                 $t->hora_inicio = '08:00:00';
                 $t->hora_fin = '09:00:00';
@@ -60,8 +62,28 @@ class HorarioController extends Controller
             'ubicacion' => 'nullable|string|max:255',
         ]);
 
-        $data['user_id'] = auth()->id();
-        Horario::create($data);
+        $userId = auth()->id();
+        $data['user_id'] = $userId;
+        $horario = Horario::create($data);
+
+        $monday = now()->startOfWeek();
+        $fechaVencimiento = $monday->copy()->addDays((int) $data['dia_semana']);
+
+        $exists = Tarea::where('user_id', $userId)
+            ->where('titulo', $data['titulo'])
+            ->whereDate('fecha_vencimiento', $fechaVencimiento)
+            ->exists();
+
+        if (!$exists) {
+            Tarea::create([
+                'user_id' => $userId,
+                'titulo' => $data['titulo'],
+                'prioridad' => 'media',
+                'categoria' => 'Horario',
+                'fecha_vencimiento' => $fechaVencimiento,
+                'orden' => (Tarea::where('user_id', $userId)->max('orden') ?? 0) + 1,
+            ]);
+        }
 
         return redirect()->route('horarios.index')->with('success', 'Bloque agregado al horario.');
     }
@@ -85,6 +107,17 @@ class HorarioController extends Controller
     public function destroy(Horario $horario): JsonResponse
     {
         if ($horario->user_id !== auth()->id()) abort(403);
+
+        $userId = auth()->id();
+        $monday = now()->startOfWeek();
+        $fechaVencimiento = $monday->copy()->addDays((int) $horario->dia_semana);
+
+        Tarea::where('user_id', $userId)
+            ->where('titulo', $horario->titulo)
+            ->whereDate('fecha_vencimiento', $fechaVencimiento)
+            ->where('categoria', 'Horario')
+            ->delete();
+
         $horario->delete();
         return response()->json(['success' => true]);
     }

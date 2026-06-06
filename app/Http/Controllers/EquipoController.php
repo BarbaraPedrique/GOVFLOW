@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Equipo;
 use App\Models\LogAuditoria;
+use App\Models\Notificacion;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,15 +12,12 @@ use Illuminate\View\View;
 
 class EquipoController extends Controller
 {
-    public function __construct()
+    private function authorizeAdmin(Request $request): void
     {
-        $this->middleware(function ($request, $next) {
-            $user = $request->user();
-            if (!$user || !in_array($user->role?->slug, ['super_admin', 'administrador'])) {
-                abort(403, 'No tienes permiso para gestionar equipos.');
-            }
-            return $next($request);
-        })->except(['index', 'show']);
+        $user = $request->user();
+        if (!$user || !in_array($user->role?->slug, ['super_admin', 'administrador'])) {
+            abort(403, 'No tienes permiso para gestionar equipos.');
+        }
     }
 
     public function index(): View
@@ -28,17 +26,22 @@ class EquipoController extends Controller
         return view('equipos.index', compact('equipos'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        $gerentes = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->get();
-        $lideres = User::whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo', 'gerente', 'administrador']))->get();
-        $empleados = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado', 'lider_equipo', 'gerente', 'administrador']))->get();
+        $this->authorizeAdmin($request);
 
-        return view('equipos.form', compact('gerentes', 'lideres', 'empleados'));
+        $equipo = null;
+        $gerentes = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
+        $lideres = User::whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo', 'gerente', 'administrador']))->orderBy('name')->get();
+        $empleados = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado', 'lider_equipo', 'gerente', 'administrador']))->orderBy('name')->get();
+
+        return view('equipos.form', compact('equipo', 'gerentes', 'lideres', 'empleados'));
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorizeAdmin($request);
+
         $data = $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
@@ -69,6 +72,19 @@ class EquipoController extends Controller
             $equipo->miembros()->attach($miembros);
         }
 
+        $icono = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>';
+        foreach (array_keys($miembros) as $uid) {
+            Notificacion::create([
+                'user_id' => $uid,
+                'tipo' => 'equipo_asignado',
+                'titulo' => 'Nuevo equipo',
+                'mensaje' => "Has sido agregado al equipo '{$equipo->nombre}'",
+                'icono' => $icono,
+                'color' => 'text-blue-500',
+                'url' => route('equipos.index'),
+            ]);
+        }
+
         LogAuditoria::registrar(
             'crear_equipo',
             'Equipo',
@@ -79,11 +95,13 @@ class EquipoController extends Controller
         return redirect()->route('equipos.index')->with('success', 'Equipo creado correctamente.');
     }
 
-    public function edit(Equipo $equipo): View
+    public function edit(Request $request, Equipo $equipo): View
     {
-        $gerentes = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->get();
-        $lideres = User::whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo', 'gerente', 'administrador']))->get();
-        $empleados = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado', 'lider_equipo', 'gerente', 'administrador']))->get();
+        $this->authorizeAdmin($request);
+
+        $gerentes = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
+        $lideres = User::whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo', 'gerente', 'administrador']))->orderBy('name')->get();
+        $empleados = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado', 'lider_equipo', 'gerente', 'administrador']))->orderBy('name')->get();
 
         $equipo->load('miembros');
 
@@ -92,6 +110,8 @@ class EquipoController extends Controller
 
     public function update(Request $request, Equipo $equipo): RedirectResponse
     {
+        $this->authorizeAdmin($request);
+
         $data = $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
@@ -108,6 +128,7 @@ class EquipoController extends Controller
             'gerente_id' => $data['gerente_id'],
         ]);
 
+        $miembrosActuales = $equipo->miembros()->pluck('equipo_user.user_id')->toArray();
         $miembros = [];
         foreach ($data['lideres'] ?? [] as $uid) {
             $miembros[$uid] = ['rol' => 'lider_equipo'];
@@ -119,6 +140,22 @@ class EquipoController extends Controller
         }
         $equipo->miembros()->sync($miembros);
 
+        $nuevosIds = array_diff(array_keys($miembros), $miembrosActuales);
+        if (!empty($nuevosIds)) {
+            $icono = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>';
+            foreach ($nuevosIds as $uid) {
+                Notificacion::create([
+                    'user_id' => $uid,
+                    'tipo' => 'equipo_asignado',
+                    'titulo' => 'Nuevo equipo',
+                    'mensaje' => "Has sido agregado al equipo '{$equipo->nombre}'",
+                    'icono' => $icono,
+                    'color' => 'text-blue-500',
+                    'url' => route('equipos.index'),
+                ]);
+            }
+        }
+
         LogAuditoria::registrar(
             'actualizar_equipo',
             'Equipo',
@@ -129,8 +166,10 @@ class EquipoController extends Controller
         return redirect()->route('equipos.index')->with('success', 'Equipo actualizado correctamente.');
     }
 
-    public function destroy(Equipo $equipo): RedirectResponse
+    public function destroy(Request $request, Equipo $equipo): RedirectResponse
     {
+        $this->authorizeAdmin($request);
+
         LogAuditoria::registrar(
             'eliminar_equipo',
             'Equipo',

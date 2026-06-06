@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Equipo;
+use App\Models\Horario;
+use App\Models\Notificacion;
 use App\Models\Tarea;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -17,24 +19,27 @@ class TareaController extends Controller
         $equipos = collect();
 
         if (in_array($user->role?->slug, ['super_admin', 'administrador'])) {
-            $tareas = Tarea::with('equipo')->porPrioridad()->get()->groupBy('prioridad');
+            $tareas = Tarea::where('categoria', '!=', 'Solicitud')->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
             $equipos = Equipo::orderBy('nombre')->get();
         } elseif ($user->role?->slug === 'gerente') {
             $equipoIds = $user->equiposDirigidos()->pluck('id');
-            $tareas = Tarea::whereIn('equipo_id', $equipoIds)
-                ->orWhere('user_id', $user->id)
+            $tareas = Tarea::where(function($q) use ($equipoIds, $user) {
+                    $q->whereIn('equipo_id', $equipoIds)->orWhere('user_id', $user->id);
+                })->where('categoria', '!=', 'Solicitud')
                 ->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
             $equipos = $user->equiposDirigidos;
         } elseif ($user->role?->slug === 'lider_equipo') {
             $equipoIds = $user->equiposComoLider()->pluck('equipo_id');
-            $tareas = Tarea::whereIn('equipo_id', $equipoIds)
-                ->orWhere('user_id', $user->id)
+            $tareas = Tarea::where(function($q) use ($equipoIds, $user) {
+                    $q->whereIn('equipo_id', $equipoIds)->orWhere('user_id', $user->id);
+                })->where('categoria', '!=', 'Solicitud')
                 ->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
             $equipos = $user->equiposComoLider;
         } else {
             $equipoIds = $user->equiposComoEmpleado()->pluck('equipo_id');
-            $tareas = Tarea::whereIn('equipo_id', $equipoIds)
-                ->orWhere('user_id', $user->id)
+            $tareas = Tarea::where(function($q) use ($equipoIds, $user) {
+                    $q->whereIn('equipo_id', $equipoIds)->orWhere('user_id', $user->id);
+                })->where('categoria', '!=', 'Solicitud')
                 ->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
             $equipos = $user->equiposComoEmpleado;
         }
@@ -53,6 +58,9 @@ class TareaController extends Controller
             'prioridad' => 'required|in:alta,media,baja',
             'categoria' => 'nullable|string|max:100',
             'fecha_vencimiento' => 'nullable|date',
+            'hora_inicio' => 'nullable|date_format:H:i',
+            'hora_fin' => 'nullable|date_format:H:i',
+            'receso' => 'nullable|integer|min:0|max:480',
             'equipo_id' => 'nullable|exists:equipos,id',
         ];
 
@@ -70,6 +78,34 @@ class TareaController extends Controller
         $data['orden'] = $maxOrden + 1;
 
         $tarea = Tarea::create($data);
+
+        Notificacion::create([
+            'user_id' => auth()->id(),
+            'tipo' => 'tarea_creada',
+            'titulo' => 'Nueva tarea',
+            'mensaje' => "Tarea '{$tarea->titulo}' creada con prioridad {$tarea->prioridad}",
+            'icono' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>',
+            'color' => 'text-emerald-500',
+            'url' => route('tareas.index'),
+        ]);
+
+        if ($tarea->fecha_vencimiento && $tarea->categoria !== 'Horario') {
+            $diaSemana = (int) $tarea->fecha_vencimiento->format('N') - 1;
+            $exists = Horario::where('user_id', auth()->id())
+                ->where('dia_semana', $diaSemana)
+                ->where('titulo', $tarea->titulo)
+                ->exists();
+
+            if (!$exists) {
+                Horario::create([
+                    'user_id' => auth()->id(),
+                    'dia_semana' => $diaSemana,
+                    'hora_inicio' => '08:00',
+                    'hora_fin' => '09:00',
+                    'titulo' => $tarea->titulo,
+                ]);
+            }
+        }
 
         LogAuditoria::registrar(
             'crear_tarea',
@@ -103,11 +139,19 @@ class TareaController extends Controller
             return response()->json(['success' => true]);
         }
 
-        $tarea->update($request->validate([
+        $data = $request->validate([
             'titulo' => 'string|max:255',
             'descripcion' => 'nullable|string|max:1000',
             'prioridad' => 'in:alta,media,baja',
-        ]));
+            'categoria' => 'nullable|string|max:100',
+            'fecha_vencimiento' => 'nullable|date',
+            'hora_inicio' => 'nullable|date_format:H:i',
+            'hora_fin' => 'nullable|date_format:H:i',
+            'receso' => 'nullable|integer|min:0|max:480',
+            'equipo_id' => 'nullable|exists:equipos,id',
+        ]);
+
+        $tarea->update($data);
 
         return response()->json(['success' => true]);
     }
@@ -115,6 +159,15 @@ class TareaController extends Controller
     public function destroy(Tarea $tarea): JsonResponse
     {
         if ($tarea->user_id !== auth()->id()) abort(403);
+
+        if ($tarea->fecha_vencimiento && $tarea->categoria !== 'Horario') {
+            $diaSemana = (int) $tarea->fecha_vencimiento->format('N') - 1;
+            Horario::where('user_id', auth()->id())
+                ->where('dia_semana', $diaSemana)
+                ->where('titulo', $tarea->titulo)
+                ->delete();
+        }
+
         $tarea->delete();
         return response()->json(['success' => true]);
     }

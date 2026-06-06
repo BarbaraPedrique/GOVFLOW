@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -27,7 +28,11 @@ class ProfileController extends Controller
             'apodo' => ['nullable', 'string', 'max:255'],
             'fecha_nacimiento' => ['nullable', 'date'],
             'descripcion' => ['nullable', 'string', 'max:1000'],
-            'foto' => ['nullable', 'image', 'max:2048'],
+            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
+        ], [
+            'foto.image' => 'El campo foto debe ser una imagen.',
+            'foto.mimes' => 'El campo foto debe ser un archivo de tipo: jpeg, png, jpg, gif, webp.',
+            'foto.max' => 'El campo foto no debe ser mayor a 5120 kilobytes.',
         ]);
 
         $user->name = $request->nombre;
@@ -35,7 +40,11 @@ class ProfileController extends Controller
         $user->fecha_nacimiento = $request->fecha_nacimiento;
         $user->descripcion = $request->descripcion;
 
-        if ($request->hasFile('foto')) {
+        if ($request->hasFile('foto') && $request->file('foto')->isValid()) {
+            $avatarsDir = Storage::disk('public')->path('avatars');
+            if (!File::exists($avatarsDir)) {
+                File::makeDirectory($avatarsDir, 0755, true);
+            }
             if ($user->foto) {
                 Storage::disk('public')->delete($user->foto);
             }
@@ -49,8 +58,10 @@ class ProfileController extends Controller
 
     public function show(): View
     {
-        $user = Auth::user()->load('role');
+        $user = Auth::user()->load(['role', 'equipos.gerente', 'equiposDirigidos']);
 
+        $equipos = $user->equiposDirigidos->merge($user->equipos)->unique('id');
+        $equipos->loadMissing(['miembros', 'gerente']);
         $completados = FlujoTrabajo::where('user_id', $user->id)
             ->where('estado', 'Completado')
             ->whereNotNull('fecha_completado')
@@ -79,6 +90,7 @@ class ProfileController extends Controller
 
         return view('mi_perfil', compact(
             'user',
+            'equipos',
             'completados',
             'eficienciaMensual',
             'eficienciaGlobal'

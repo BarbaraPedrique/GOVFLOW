@@ -38,12 +38,17 @@ class Notificacion extends Model
     public function scopePendientes($query)
     {
         return $query->where('leido', false)
-            ->where('created_at', '>=', now()->subDays(3));
+            ->where('created_at', '>=', now()->subDays(7));
     }
 
     public function scopeRecientes($query)
     {
-        return $query->where('created_at', '>=', now()->subDays(3))
+        return $query->where('created_at', '>=', now()->subDays(7))
             ->orderByDesc('created_at');
+    }
+
+    public function scopeViejas($query)
+    {
+        return $query->where('created_at', '<', now()->subDays(7));
     }
 }
