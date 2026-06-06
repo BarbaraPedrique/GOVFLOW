@@ -17,7 +17,11 @@ class Tarea extends Model
         'prioridad',
         'categoria',
         'fecha_vencimiento',
+        'hora_inicio',
+        'hora_fin',
+        'receso',
         'completada',
+        'status',
         'orden',
     ];
 

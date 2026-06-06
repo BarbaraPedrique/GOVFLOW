@@ -76,6 +76,14 @@ class User extends Authenticatable
         return $this->hasMany(Equipo::class, 'gerente_id');
     }
 
+    public function getFotoUrlAttribute(): string
+    {
+        if (!$this->foto) {
+            return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80';
+        }
+        return asset('storage/' . $this->foto) . '?v=' . ($this->updated_at?->timestamp ?? 0);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role?->slug === 'administrador';

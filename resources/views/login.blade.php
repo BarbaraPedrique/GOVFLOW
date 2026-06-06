@@ -39,6 +39,12 @@
                     </div>
                 @endif
 
+                @if (session('status'))
+                    <div class="bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-lg p-3">
+                        {{ session('status') }}
+                    </div>
+                @endif
+
                 <div>
                     <label for="email" class="block text-sm font-semibold text-slate-800 mb-2">Correo Electrónico</label>
                     <div class="relative">

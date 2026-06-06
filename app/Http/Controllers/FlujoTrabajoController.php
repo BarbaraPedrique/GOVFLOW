@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FlujoTrabajo;
+use App\Models\Notificacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -47,12 +48,22 @@ class FlujoTrabajoController extends Controller
             'estado.required'       => 'El estado es obligatorio.',
         ]);
 
-        FlujoTrabajo::create([
+        $flujo = FlujoTrabajo::create([
             'codigo'       => FlujoTrabajo::generarCodigo(),
             'nombre'       => $request->nombre,
             'departamento' => $request->departamento,
             'estado'       => $request->estado,
             'user_id'      => Auth::id(),
+        ]);
+
+        Notificacion::create([
+            'user_id' => Auth::id(),
+            'tipo' => 'flujo_creado',
+            'titulo' => 'Nuevo flujo de trabajo',
+            'mensaje' => "Flujo '{$flujo->nombre}' creado con código {$flujo->codigo}",
+            'icono' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>',
+            'color' => 'text-amber-500',
+            'url' => route('flujos.index'),
         ]);
 
         return redirect()->route('flujos.index')

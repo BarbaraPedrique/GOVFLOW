@@ -11,27 +11,7 @@
 </head>
 <body class="bg-slate-50 flex min-h-screen">
 
-<aside class="w-64 bg-white border-r border-slate-200 flex flex-col fixed h-full z-20">
-    <div class="h-16 border-b border-slate-100 flex items-center px-6">
-        <img src="{{ asset('imagenes/logo2.png') }}" alt="Logo GOVFLOW" class="h-8 w-auto object-contain">
-        <span class="ml-3 text-lg font-bold text-slate-800">GOVFLOW</span>
-    </div>
-    <nav class="p-4 space-y-1 flex-1 overflow-y-auto">
-        <a href="{{ route('inicio') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V16zM14 14a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" /></svg> Inicio</a>
-        <a href="{{ route('tareas.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#007BFF] bg-blue-50 rounded-xl transition-colors"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg> Tareas</a>
-        <a href="{{ route('horarios.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> Horarios</a>
-        <a href="{{ route('flujos') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> Flujos de Trabajo</a>
-        <a href="{{ route('equipos.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> Equipos</a>
-        <a href="{{ route('equipos.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> Equipos</a>
-        <a href="{{ route('auditoria') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> Auditoría</a>
-        @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador']))
-            <a href="{{ route('logs.auditoria') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> Logs Auditoría</a>
-            @endif
-        @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador']))
-        <a href="{{ route('disenador') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg> Diseñador</a>
-        @endif
-    </nav>
-</aside>
+@include('partials.sidebar')
 
 <div class="flex-1 ml-64 flex flex-col min-h-screen">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-10 fixed right-0 left-64 top-0 z-30">
@@ -74,7 +54,7 @@
             <div class="relative" x-data="{ open: false }">
                 <div @click="open = !open" class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-all">
                     <div class="text-right hidden sm:block">
-                        <p class="text-sm font-semibold text-slate-800 leading-none">{{ Auth::user()->name }}</p>
+                        <p class="text-sm font-semibold text-slate-800 leading-none">{{ Auth::user()->apodo ?? Auth::user()->name }}</p>
                         <p class="text-[11px] text-slate-400 font-medium mt-0.5">{{ Auth::user()->role?->display_name ?? 'Sin rol' }}</p>
                     </div>
                     <img src="{{ Auth::user()->foto ? asset('storage/'.Auth::user()->foto) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80' }}" class="h-9 w-9 rounded-full object-cover border border-slate-200">
@@ -130,6 +110,26 @@
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Vence</label>
                         <input type="date" x-model="nuevaTarea.fecha_vencimiento" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
                     </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Inicio</label>
+                        <input type="time" x-model="nuevaTarea.hora_inicio" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Fin</label>
+                        <input type="time" x-model="nuevaTarea.hora_fin" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Receso</label>
+                        <select x-model="nuevaTarea.receso" class="px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white">
+                            <option value="">Sin receso</option>
+                            <option value="15">15 min</option>
+                            <option value="30">30 min</option>
+                            <option value="45">45 min</option>
+                            <option value="60">60 min</option>
+                            <option value="90">90 min</option>
+                            <option value="120">120 min</option>
+                        </select>
+                    </div>
                     <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#007BFF] text-sm font-semibold text-white hover:bg-blue-600">Agregar</button>
                 </form>
             </div>
@@ -147,22 +147,26 @@
                                 <div draggable="true" @dragstart="dragTarea=tarea.id"
                                      class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
                                      :class="{'opacity-50':tarea.completada, 'border-l-4 border-l-rose-500':tarea.prioridad==='alta', 'border-l-4 border-l-amber-500':tarea.prioridad==='media', 'border-l-4 border-l-emerald-500':tarea.prioridad==='baja'}">
-                                    <div class="flex items-start justify-between gap-2">
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-sm font-medium text-slate-800" x-text="tarea.titulo"></p>
-                                            <p class="text-xs text-slate-400 mt-1" x-show="tarea.categoria" x-text="tarea.categoria"></p>
-                                            <p class="text-xs text-slate-400 mt-0.5" x-show="tarea.fecha_vencimiento" x-text="'Vence: '+new Date(tarea.fecha_vencimiento+'T00:00:00').toLocaleDateString('es-ES')"></p>
-                                            <p class="text-xs text-slate-400 mt-0.5" x-show="tarea.equipo?.nombre" x-text="'📋 ' + tarea.equipo.nombre"></p>
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-slate-800" x-text="tarea.titulo"></p>
+                                                <p class="text-xs text-slate-400 mt-1" x-show="tarea.categoria" x-text="tarea.categoria"></p>
+                                                <p class="text-xs text-slate-400 mt-0.5" x-show="tarea.fecha_vencimiento" x-text="'Vence: '+new Date(tarea.fecha_vencimiento+'T00:00:00').toLocaleDateString('es-ES')"></p>
+                                                <p class="text-xs text-slate-400 mt-0.5" x-show="tarea.equipo?.nombre" x-text="'📋 ' + tarea.equipo.nombre"></p>
+                                                <p class="text-xs text-slate-400 mt-0.5" x-show="tarea.hora_inicio && tarea.hora_fin" x-text="(tarea.hora_inicio||'').substring(0,5) + ' - ' + (tarea.hora_fin||'').substring(0,5) + (tarea.receso ? ' (receso '+tarea.receso+'\' )' : '')"></p>
+                                            </div>
+                                            <div class="flex items-center gap-1 flex-shrink-0">
+                                                <button @click="editarTarea(tarea)" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors" title="Editar tarea">
+                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.25 2.25 0 113.182 3.182L12 20.25l-4.5 1.5 1.5-4.5L18.586 3.586z" /></svg>
+                                                </button>
+                                                <button @click="toggleCompletada(tarea)" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-emerald-600 transition-colors" title="Completar">
+                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                </button>
+                                                <button @click="eliminarTarea(tarea)" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-rose-600 transition-colors" title="Eliminar">
+                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div class="flex items-center gap-1 flex-shrink-0">
-                                            <button @click="toggleCompletada(tarea)" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-emerald-600 transition-colors" title="Completar">
-                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            </button>
-                                            <button @click="eliminarTarea(tarea)" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-rose-600 transition-colors" title="Eliminar">
-                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                            </button>
-                                        </div>
-                                    </div>
                                 </div>
                             </template>
                             <div x-show="$store.tareas.filter(t=>t.prioridad===p&&!t.completada).length===0" class="text-sm text-slate-400 text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
@@ -187,16 +191,88 @@
                     </template>
                 </div>
             </div>
+        <!-- Edit Modal -->
+        <div x-show="editModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50" @click.outside="editModal = false">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Editar Tarea</h3>
+                <form @submit.prevent="guardarEdicion" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Título</label>
+                        <input type="text" x-model="editForm.titulo" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Descripción</label>
+                        <textarea x-model="editForm.descripcion" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Prioridad</label>
+                            <select x-model="editForm.prioridad" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white">
+                                <option value="alta">Alta</option>
+                                <option value="media">Media</option>
+                                <option value="baja">Baja</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Categoría</label>
+                            <input type="text" x-model="editForm.categoria" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Equipo</label>
+                            <select x-model="editForm.equipo_id" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white">
+                                <option value="">Sin equipo</option>
+                                @foreach($equipos as $equipo)
+                                    <option value="{{ $equipo->id }}">{{ $equipo->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha de Vencimiento</label>
+                            <input type="date" x-model="editForm.fecha_vencimiento" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Hora Inicio</label>
+                            <input type="time" x-model="editForm.hora_inicio" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Hora Fin</label>
+                            <input type="time" x-model="editForm.hora_fin" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Receso</label>
+                            <select x-model="editForm.receso" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white">
+                                <option value="">Sin receso</option>
+                                <option value="15">15 min</option>
+                                <option value="30">30 min</option>
+                                <option value="45">45 min</option>
+                                <option value="60">60 min</option>
+                                <option value="90">90 min</option>
+                                <option value="120">120 min</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" @click="editModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 rounded-xl bg-[#007BFF] text-sm font-semibold text-white hover:bg-blue-600">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
         </div>
+    @include('partials.solicitar-modal')
     </main>
-</div>
 
-<script>
+    <script>
 document.addEventListener('alpine:init', () => {
     Alpine.store('tareas', @json($tareas->flatten(1)->values() ?? []));
 
     Alpine.data('tareasApp', () => ({
-        nuevaTarea: { titulo: '', prioridad: 'media', categoria: '', fecha_vencimiento: '', equipo_id: '' },
+        nuevaTarea: { titulo: '', prioridad: 'media', categoria: '', fecha_vencimiento: '', hora_inicio: '', hora_fin: '', receso: '', equipo_id: '' },
+        editModal: false,
+        editForm: { id: null, titulo: '', descripcion: '', prioridad: 'media', categoria: '', equipo_id: '', fecha_vencimiento: '', hora_inicio: '', hora_fin: '', receso: '' },
         dragTarea: null,
         csrf: '{{ csrf_token() }}',
 
@@ -206,15 +282,18 @@ document.addEventListener('alpine:init', () => {
             form.append('prioridad', this.nuevaTarea.prioridad);
             form.append('categoria', this.nuevaTarea.categoria);
             form.append('fecha_vencimiento', this.nuevaTarea.fecha_vencimiento);
+            form.append('hora_inicio', this.nuevaTarea.hora_inicio);
+            form.append('hora_fin', this.nuevaTarea.hora_fin);
+            form.append('receso', this.nuevaTarea.receso);
             form.append('equipo_id', this.nuevaTarea.equipo_id);
 
             fetch('{{ route('tareas.store') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': this.csrf }, body: form })
                 .then(r => r.redirected ? window.location.href = r.url : r.json())
                 .then(data => {
                     if (data?.success) {
-                        const t = { id: data.id, titulo: this.nuevaTarea.titulo, prioridad: this.nuevaTarea.prioridad, categoria: this.nuevaTarea.categoria, fecha_vencimiento: this.nuevaTarea.fecha_vencimiento, completada: false, orden: 999 };
+                        const t = { id: data.id, titulo: this.nuevaTarea.titulo, prioridad: this.nuevaTarea.prioridad, categoria: this.nuevaTarea.categoria, fecha_vencimiento: this.nuevaTarea.fecha_vencimiento, hora_inicio: this.nuevaTarea.hora_inicio, hora_fin: this.nuevaTarea.hora_fin, receso: this.nuevaTarea.receso, completada: false, orden: 999 };
                         Alpine.store('tareas').push(t);
-                        this.nuevaTarea = { titulo: '', prioridad: 'media', categoria: '', fecha_vencimiento: '' };
+                        this.nuevaTarea = { titulo: '', prioridad: 'media', categoria: '', fecha_vencimiento: '', hora_inicio: '', hora_fin: '', receso: '', equipo_id: '' };
                     } else { window.location.reload(); }
                 });
         },
@@ -237,7 +316,42 @@ document.addEventListener('alpine:init', () => {
             fetch('{{ url('/tareas') }}/'+id, { method: 'PUT', headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json' }, body: JSON.stringify({ prioridad }) })
                 .then(r => r.json()).then(d => { if(!d.success) tarea.prioridad = oldP; });
             this.dragTarea = null;
-        }
+        },
+        editarTarea(tarea) {
+            this.editForm.id = tarea.id;
+            this.editForm.titulo = tarea.titulo;
+            this.editForm.descripcion = tarea.descripcion || '';
+            this.editForm.prioridad = tarea.prioridad;
+            this.editForm.categoria = tarea.categoria || '';
+            this.editForm.equipo_id = tarea.equipo_id || '';
+            this.editForm.fecha_vencimiento = tarea.fecha_vencimiento || '';
+            this.editForm.hora_inicio = tarea.hora_inicio || '';
+            this.editForm.hora_fin = tarea.hora_fin || '';
+            this.editForm.receso = tarea.receso || '';
+            this.editModal = true;
+        },
+        guardarEdicion() {
+            const data = {
+                titulo: this.editForm.titulo,
+                descripcion: this.editForm.descripcion,
+                prioridad: this.editForm.prioridad,
+                categoria: this.editForm.categoria,
+                equipo_id: this.editForm.equipo_id || null,
+                fecha_vencimiento: this.editForm.fecha_vencimiento || null,
+                hora_inicio: this.editForm.hora_inicio || null,
+                hora_fin: this.editForm.hora_fin || null,
+                receso: this.editForm.receso || null,
+            };
+            fetch('{{ url('/tareas') }}/'+this.editForm.id, { method: 'PUT', headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+                .then(r => r.json()).then(d => {
+                    if(d.success) {
+                        const t = Alpine.store('tareas').find(t => t.id === this.editForm.id);
+                        if(t) { Object.assign(t, data); }
+                        this.editModal = false;
+                    } else { alert('Error al guardar'); }
+                });
+        },
+
     }));
 });
 </script>

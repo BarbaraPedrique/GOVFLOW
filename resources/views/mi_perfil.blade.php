@@ -7,30 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Inter', sans-serif; } </style>
+    <style> body { font-family: 'Inter', sans-serif; } [x-cloak] { display: none !important; } </style>
 </head>
-<body class="bg-slate-50 flex min-h-screen">
+<body class="bg-slate-50 flex min-h-screen" x-data="{ equipoModal: null }">
 
-    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col fixed h-full z-20">
-        <div class="h-16 border-b border-slate-100 flex items-center px-6">
-            <img src="{{ asset('imagenes/logo2.png') }}" alt="Logo GOVFLOW" class="h-8 w-auto object-contain">
-            <span class="ml-3 text-lg font-bold text-slate-800">GOVFLOW</span>
-        </div>
-        <nav class="p-4 space-y-1 flex-1 overflow-y-auto">
-            <a href="{{ route('inicio') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V16zM14 14a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" /></svg> Inicio</a>
-            <a href="{{ route('tareas.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg> Tareas</a>
-            <a href="{{ route('horarios.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> Horarios</a>
-            <a href="{{ route('flujos') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> Flujos de Trabajo</a>
-            <a href="{{ route('equipos.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> Equipos</a>
-        <a href="{{ route('auditoria') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> Auditoría</a>
-            @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador']))
-            <a href="{{ route('logs.auditoria') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> Logs Auditoría</a>
-            @endif
-            @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador']))
-        <a href="{{ route('disenador') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg> Diseñador</a>
-        @endif
-        </nav>
-    </aside>
+    @include('partials.sidebar')
 
     <div class="flex-1 ml-64 flex flex-col min-h-screen">
 
@@ -42,7 +23,7 @@
                 @include('partials.notification-bell')
                 <div class="relative" x-data="{ open: false }">
                     <div @click="open = !open" class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-all">
-                        <div class="text-right hidden sm:block"><p class="text-sm font-semibold text-slate-800 leading-none">{{ $user->name }}</p><p class="text-[11px] text-slate-400 font-medium mt-0.5">{{ $user->role?->display_name ?? 'Sin rol' }}</p></div>
+                        <div class="text-right hidden sm:block"><p class="text-sm font-semibold text-slate-800 leading-none">{{ $user->apodo ?? $user->name }}</p><p class="text-[11px] text-slate-400 font-medium mt-0.5">{{ $user->role?->display_name ?? 'Sin rol' }}</p></div>
                         <img src="{{ $user->foto ? asset('storage/'.$user->foto) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80' }}" class="h-9 w-9 rounded-full object-cover border border-slate-200">
                         <svg class="h-4 w-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7" /></svg>
                     </div>
@@ -62,7 +43,7 @@
                     <div class="flex items-center gap-6">
                         <img src="{{ $user->foto ? asset('storage/' . $user->foto) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80' }}" alt="Avatar" class="h-20 w-20 rounded-full object-cover border-2 border-white shadow-md ring-4 ring-white">
                         <div>
-                            <h1 class="text-2xl font-bold text-slate-800">{{ $user->name }}</h1>
+                            <h1 class="text-2xl font-bold text-slate-800">{{ $user->apodo ?? $user->name }}</h1>
                             <p class="text-slate-500 text-sm mt-1">
                                 <span class="inline-flex items-center gap-1.5">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
@@ -77,6 +58,21 @@
                             @if ($user->descripcion)
                                 <p class="text-sm text-slate-600 mt-2">{{ $user->descripcion }}</p>
                             @endif
+                            <div class="flex flex-wrap items-center gap-2 mt-3">
+                                <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                @forelse ($equipos as $eq)
+                                    <button @click="equipoModal = {{ $eq->id }}"
+                                        class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-1 transition-all
+                                        @if($eq->gerente_id === $user->id) bg-purple-50 text-purple-700 hover:ring-purple-300
+                                        @elseif($user->equipos->contains($eq) && $user->equipos->find($eq->id)?->pivot->rol === 'lider_equipo') bg-amber-50 text-amber-700 hover:ring-amber-300
+                                        @else bg-blue-50 text-blue-700 hover:ring-blue-300
+                                        @endif">
+                                        {{ $eq->nombre }}
+                                    </button>
+                                @empty
+                                    <span class="text-sm text-slate-400">Sin equipo</span>
+                                @endforelse
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -179,8 +175,55 @@
                 </div>
             </div>
 
-        </main>
-    </div>
+        <!-- Team Members Modal -->
+        <div x-show="equipoModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" @click.outside="equipoModal = null">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto">
+                @foreach ($equipos as $eq)
+                    <div x-show="equipoModal === {{ $eq->id }}" x-cloak>
+                        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-800">{{ $eq->nombre }}</h3>
+                                <p class="text-xs text-slate-400 mt-0.5">
+                                    Gerente: <span class="font-medium text-slate-600">{{ $eq->gerente?->name ?? '—' }}</span>
+                                </p>
+                            </div>
+                            <button @click="equipoModal = null" class="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <div class="p-6 space-y-3">
+                            @php $miembros = $eq->miembros()->withPivot('rol')->get(); @endphp
+                            @forelse ($miembros as $miembro)
+                                <div class="flex items-center gap-3 py-2">
+                                    <img src="{{ $miembro->foto ? asset('storage/'.$miembro->foto) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80' }}" class="h-9 w-9 rounded-full object-cover border border-slate-200">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-slate-800">{{ $miembro->apodo ?? $miembro->name }}</p>
+                                        <p class="text-xs text-slate-400">
+                                            @php
+                                                $rolPivot = $miembro->pivot?->rol ?? '';
+                                            @endphp
+                                            @if($miembro->id === $eq->gerente_id)
+                                                <span class="text-purple-600 font-medium">Gerente</span>
+                                            @elseif($rolPivot === 'lider_equipo')
+                                                <span class="text-amber-600 font-medium">Líder</span>
+                                            @else
+                                                <span class="text-blue-600 font-medium">Miembro</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
+                            @empty
+                                <p class="text-sm text-slate-400 text-center py-4">Sin miembros en este equipo.</p>
+                            @endforelse
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        @include('partials.solicitar-modal')
+    </main>
+</div>
 
 </body>
 </html>
