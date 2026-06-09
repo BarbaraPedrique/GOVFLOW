@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Equipo;
 use App\Models\Horario;
+use App\Models\LogAuditoria;
 use App\Models\Notificacion;
 use App\Models\Tarea;
 use Illuminate\Http\JsonResponse;
@@ -17,29 +18,36 @@ class TareaController extends Controller
     {
         $user = auth()->user();
         $equipos = collect();
+        $historialLimite = now()->subDays(7);
+
+        $baseQuery = function ($query) use ($historialLimite) {
+            return $query->where(function ($q) use ($historialLimite) {
+                $q->whereNull('completed_at')->orWhere('completed_at', '>=', $historialLimite);
+            })->where('categoria', '!=', 'Solicitud');
+        };
 
         if (in_array($user->role?->slug, ['super_admin', 'administrador'])) {
-            $tareas = Tarea::where('categoria', '!=', 'Solicitud')->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
+            $tareas = Tarea::where($baseQuery)->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
             $equipos = Equipo::orderBy('nombre')->get();
         } elseif ($user->role?->slug === 'gerente') {
             $equipoIds = $user->equiposDirigidos()->pluck('id');
             $tareas = Tarea::where(function($q) use ($equipoIds, $user) {
                     $q->whereIn('equipo_id', $equipoIds)->orWhere('user_id', $user->id);
-                })->where('categoria', '!=', 'Solicitud')
+                })->where($baseQuery)
                 ->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
             $equipos = $user->equiposDirigidos;
         } elseif ($user->role?->slug === 'lider_equipo') {
             $equipoIds = $user->equiposComoLider()->pluck('equipo_id');
             $tareas = Tarea::where(function($q) use ($equipoIds, $user) {
                     $q->whereIn('equipo_id', $equipoIds)->orWhere('user_id', $user->id);
-                })->where('categoria', '!=', 'Solicitud')
+                })->where($baseQuery)
                 ->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
             $equipos = $user->equiposComoLider;
         } else {
             $equipoIds = $user->equiposComoEmpleado()->pluck('equipo_id');
             $tareas = Tarea::where(function($q) use ($equipoIds, $user) {
                     $q->whereIn('equipo_id', $equipoIds)->orWhere('user_id', $user->id);
-                })->where('categoria', '!=', 'Solicitud')
+                })->where($baseQuery)
                 ->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
             $equipos = $user->equiposComoEmpleado;
         }
@@ -47,7 +55,7 @@ class TareaController extends Controller
         return view('tareas', compact('tareas', 'equipos'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $user = auth()->user();
         $esAdmin = in_array($user->role?->slug, ['super_admin', 'administrador']);
@@ -114,21 +122,31 @@ class TareaController extends Controller
             "Tarea '{$tarea->titulo}' creada con prioridad {$tarea->prioridad}" . ($tarea->equipo_id ? " para equipo #{$tarea->equipo_id}" : ''),
         );
 
+        if ($request->ajax() || $request->wantsJson()) {
+            $tarea->load('equipo');
+            return response()->json(['success' => true, 'id' => $tarea->id, 'tarea' => $tarea]);
+        }
+
         return redirect()->route('tareas.index')->with('success', 'Tarea creada correctamente.');
     }
 
     public function update(Request $request, Tarea $tarea): JsonResponse
     {
-        if ($tarea->user_id !== auth()->id()) abort(403);
+        $user = auth()->user();
+        if ($tarea->user_id !== $user->id && !in_array($user->role?->slug, ['super_admin', 'administrador'])) abort(403);
 
         if ($request->has('completada')) {
-            $tarea->update(['completada' => $request->boolean('completada')]);
+            $completada = $request->boolean('completada');
+            $tarea->update([
+                'completada' => $completada,
+                'completed_at' => $completada ? now() : null,
+            ]);
 
             LogAuditoria::registrar(
-                $request->boolean('completada') ? 'completar_tarea' : 'reabrir_tarea',
+                $completada ? 'completar_tarea' : 'reabrir_tarea',
                 'Tarea',
                 $tarea->id,
-                "Tarea '{$tarea->titulo}' " . ($request->boolean('completada') ? 'completada' : 'reabierta'),
+                "Tarea '{$tarea->titulo}' " . ($completada ? 'completada' : 'reabierta'),
             );
 
             return response()->json(['success' => true]);
@@ -158,7 +176,8 @@ class TareaController extends Controller
 
     public function destroy(Tarea $tarea): JsonResponse
     {
-        if ($tarea->user_id !== auth()->id()) abort(403);
+        $user = auth()->user();
+        if ($tarea->user_id !== $user->id && !in_array($user->role?->slug, ['super_admin', 'administrador'])) abort(403);
 
         if ($tarea->fecha_vencimiento && $tarea->categoria !== 'Horario') {
             $diaSemana = (int) $tarea->fecha_vencimiento->format('N') - 1;

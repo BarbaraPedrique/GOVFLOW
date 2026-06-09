@@ -12,12 +12,15 @@ class FlujoTrabajo extends Model
 
     protected $fillable = [
         'user_id',
+        'equipo_id',
         'codigo',
         'nombre',
         'departamento',
         'estado',
         'fecha_limite',
         'fecha_completado',
+        'pasos',
+        'diseno',
     ];
 
     protected function casts(): array
@@ -25,6 +28,8 @@ class FlujoTrabajo extends Model
         return [
             'fecha_limite' => 'date',
             'fecha_completado' => 'date',
+            'pasos' => 'array',
+            'diseno' => 'array',
         ];
     }
 
@@ -38,6 +43,16 @@ class FlujoTrabajo extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function equipo(): BelongsTo
+    {
+        return $this->belongsTo(Equipo::class);
+    }
+
+    public function ejecuciones(): HasMany
+    {
+        return $this->hasMany(FlujoEjecucion::class, 'flujo_trabajo_id');
     }
 
     public function estados(): HasMany

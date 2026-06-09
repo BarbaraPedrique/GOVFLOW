@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('tipo');
             $table->string('titulo');
             $table->text('mensaje')->nullable();
-            $table->string('icono')->nullable();
+            $table->text('icono')->nullable();
             $table->string('color')->nullable();
             $table->string('url')->nullable();
             $table->boolean('leido')->default(false);

@@ -46,6 +46,10 @@ class EquipoController extends Controller
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
             'gerente_id' => 'required|exists:users,id',
+            'admin_equipo' => 'nullable|array',
+            'admin_equipo.*' => 'exists:users,id',
+            'gerentes_equipo' => 'nullable|array',
+            'gerentes_equipo.*' => 'exists:users,id',
             'lideres' => 'nullable|array',
             'lideres.*' => 'exists:users,id',
             'empleados' => 'nullable|array',
@@ -60,8 +64,18 @@ class EquipoController extends Controller
         ]);
 
         $miembros = [];
+        foreach ($data['admin_equipo'] ?? [] as $uid) {
+            $miembros[$uid] = ['rol' => 'administrador'];
+        }
+        foreach ($data['gerentes_equipo'] ?? [] as $uid) {
+            if (!isset($miembros[$uid])) {
+                $miembros[$uid] = ['rol' => 'gerente'];
+            }
+        }
         foreach ($data['lideres'] ?? [] as $uid) {
-            $miembros[$uid] = ['rol' => 'lider_equipo'];
+            if (!isset($miembros[$uid])) {
+                $miembros[$uid] = ['rol' => 'lider_equipo'];
+            }
         }
         foreach ($data['empleados'] ?? [] as $uid) {
             if (!isset($miembros[$uid])) {
@@ -100,12 +114,11 @@ class EquipoController extends Controller
         $this->authorizeAdmin($request);
 
         $gerentes = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
-        $lideres = User::whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo', 'gerente', 'administrador']))->orderBy('name')->get();
-        $empleados = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado', 'lider_equipo', 'gerente', 'administrador']))->orderBy('name')->get();
+        $todos = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado', 'lider_equipo', 'gerente', 'administrador', 'super_admin']))->orderBy('name')->get();
 
         $equipo->load('miembros');
 
-        return view('equipos.form', compact('equipo', 'gerentes', 'lideres', 'empleados'));
+        return view('equipos.form', compact('equipo', 'gerentes', 'todos'));
     }
 
     public function update(Request $request, Equipo $equipo): RedirectResponse
@@ -116,6 +129,10 @@ class EquipoController extends Controller
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
             'gerente_id' => 'required|exists:users,id',
+            'admin_equipo' => 'nullable|array',
+            'admin_equipo.*' => 'exists:users,id',
+            'gerentes_equipo' => 'nullable|array',
+            'gerentes_equipo.*' => 'exists:users,id',
             'lideres' => 'nullable|array',
             'lideres.*' => 'exists:users,id',
             'empleados' => 'nullable|array',
@@ -130,8 +147,18 @@ class EquipoController extends Controller
 
         $miembrosActuales = $equipo->miembros()->pluck('equipo_user.user_id')->toArray();
         $miembros = [];
+        foreach ($data['admin_equipo'] ?? [] as $uid) {
+            $miembros[$uid] = ['rol' => 'administrador'];
+        }
+        foreach ($data['gerentes_equipo'] ?? [] as $uid) {
+            if (!isset($miembros[$uid])) {
+                $miembros[$uid] = ['rol' => 'gerente'];
+            }
+        }
         foreach ($data['lideres'] ?? [] as $uid) {
-            $miembros[$uid] = ['rol' => 'lider_equipo'];
+            if (!isset($miembros[$uid])) {
+                $miembros[$uid] = ['rol' => 'lider_equipo'];
+            }
         }
         foreach ($data['empleados'] ?? [] as $uid) {
             if (!isset($miembros[$uid])) {

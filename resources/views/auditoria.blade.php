@@ -20,6 +20,7 @@
                 <h2 class="text-slate-800 font-semibold text-lg">Panel de Auditoría</h2>
             </div>
             <div class="flex items-center gap-6">
+                @include('partials.break-buttons')
                 @include('partials.notification-bell')
                 <div class="relative" x-data="{ open: false }">
                     <div @click="open = !open" class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-all">
@@ -111,8 +112,7 @@
                     </div>
                     <div class="flex gap-2">
                         <button type="submit" class="px-5 py-2.5 bg-[#007BFF] text-white text-sm font-semibold rounded-xl hover:bg-blue-600 transition-colors">Filtrar</button>
-                        <a href="{{ route('equipos.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"><svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> Equipos</a>
-        <a href="{{ route('auditoria') }}" class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-colors">Limpiar</a>
+                        <a href="{{ route('auditoria') }}" class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-colors">Limpiar</a>
                     </div>
                 </form>
             </div>
@@ -126,7 +126,7 @@
             @else
                 <div class="space-y-6">
                     @foreach($grupos as $grupo)
-                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" x-data="{ open: true }">
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm" x-data="{ open: true }">
                             <button @click="open = !open" class="w-full px-8 py-5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left">
                                 <div class="flex items-center gap-4">
                                     <div class="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
@@ -148,74 +148,76 @@
 
                             <div x-show="open" x-collapse>
                                 <div class="border-t border-slate-100">
-                                    <div class="overflow-x-auto">
-                                        <table class="w-full text-sm">
-                                            <thead>
-                                                <tr class="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                                    <th class="px-8 py-4 w-1/6">Quién</th>
-                                                    <th class="px-8 py-4 w-1/6">Cuándo</th>
-                                                    <th class="px-8 py-4 w-1/6">Qué hizo</th>
-                                                    <th class="px-8 py-4 w-1/6">Sobre qué</th>
-                                                    <th class="px-8 py-4 w-1/3">Qué cambió</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="divide-y divide-slate-100">
-                                                @foreach($grupo->logs as $log)
-                                                    <tr class="hover:bg-slate-50 transition-colors">
-                                                        <td class="px-8 py-4">
-                                                            <div class="flex items-center gap-2">
-                                                                <img src="{{ $log->user?->foto ? asset('storage/'.$log->user->foto) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&q=80' }}" class="h-7 w-7 rounded-full object-cover shrink-0">
-                                                                <span class="font-medium text-slate-700">{{ $log->user?->name ?? 'Sistema' }}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td class="px-8 py-4 text-slate-500 whitespace-nowrap">
-                                                            <span class="text-xs">{{ $log->created_at->format('d/m/Y') }}</span>
-                                                            <span class="text-xs text-slate-400 ml-1">{{ $log->created_at->format('H:i') }}</span>
-                                                        </td>
-                                                        <td class="px-8 py-4">
-                                                            @php
-                                                                $accionColor = match($log->accion) {
-                                                                    'crear' => 'text-emerald-700 bg-emerald-50',
-                                                                    'actualizar', 'update' => 'text-blue-700 bg-blue-50',
-                                                                    'eliminar', 'delete' => 'text-rose-700 bg-rose-50',
-                                                                    default => 'text-slate-700 bg-slate-100'
-                                                                };
-                                                            @endphp
-                                                            <span class="inline-block text-xs font-semibold px-2.5 py-1 rounded-full {{ $accionColor }}">{{ ucfirst($log->accion) }}</span>
-                                                        </td>
-                                                        <td class="px-8 py-4 text-slate-500 text-xs">{{ $log->descripcion }}</td>
-                                                        <td class="px-8 py-4">
-                                                            @if($log->metadata && is_array($log->metadata) && count($log->metadata) > 0)
-                                                                <div class="space-y-1">
-                                                                    @foreach($log->metadata as $campo => $valor)
-                                                                        @if(is_array($valor) && isset($valor['old']) && isset($valor['new']))
-                                                                            <div class="flex items-start gap-2 text-xs">
-                                                                                <span class="font-medium text-slate-600 shrink-0">{{ $campo }}:</span>
-                                                                                <div class="flex flex-wrap items-center gap-1">
-                                                                                    <span class="line-through text-rose-500">{{ $valor['old'] ?? '' }}</span>
-                                                                                    <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                                                                                    <span class="text-emerald-600 font-medium">{{ $valor['new'] ?? '' }}</span>
+                                    <table class="w-full text-xs">
+                                        <thead>
+                                            <tr class="bg-slate-50 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                                                <th class="px-3 py-2.5 w-1/5">Quién</th>
+                                                <th class="px-3 py-2.5 w-[90px]">Cuándo</th>
+                                                <th class="px-3 py-2.5 w-[70px]">Acción</th>
+                                                <th class="px-3 py-2.5 w-2/5">Sobre qué</th>
+                                                <th class="px-3 py-2.5 w-[60px]">Detalles</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">
+                                            @foreach($grupo->logs as $log)
+                                                @php
+                                                    $accionColor = match($log->accion) {
+                                                        'crear' => 'text-emerald-700 bg-emerald-50',
+                                                        'actualizar', 'update' => 'text-blue-700 bg-blue-50',
+                                                        'eliminar', 'delete' => 'text-rose-700 bg-rose-50',
+                                                        default => 'text-slate-700 bg-slate-100'
+                                                    };
+                                                @endphp
+                                                <tr class="hover:bg-slate-50 transition-colors">
+                                                    <td class="px-3 py-2.5">
+                                                        <div class="flex items-center gap-1.5">
+                                                            <img src="{{ $log->user?->foto ? asset('storage/'.$log->user->foto) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&q=80' }}" class="h-6 w-6 rounded-full object-cover shrink-0">
+                                                            <span class="font-medium text-slate-700 truncate max-w-[120px]">{{ $log->user?->name ?? 'Sistema' }}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap">
+                                                        <span>{{ $log->created_at->format('d/m/Y') }}</span>
+                                                        <span class="text-slate-400 ml-0.5">{{ $log->created_at->format('H:i') }}</span>
+                                                    </td>
+                                                    <td class="px-3 py-2.5">
+                                                        <span class="inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded-full {{ $accionColor }}">{{ ucfirst($log->accion) }}</span>
+                                                    </td>
+                                                    <td class="px-3 py-2.5 text-slate-500 truncate max-w-[250px]" title="{{ $log->descripcion }}">{{ $log->descripcion }}</td>
+                                                    <td class="px-3 py-2.5">
+                                                        @if($log->metadata && is_array($log->metadata) && count($log->metadata) > 0)
+                                                            <button @click="$el.nextElementSibling.classList.remove('hidden')" class="text-[10px] font-semibold text-[#007BFF] hover:underline">Ver</button>
+                                                            <div class="hidden fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onclick="event.target===this&&this.classList.add('hidden')">
+                                                                <div class="bg-white rounded-xl shadow-xl border border-slate-200 p-3 min-w-[200px] max-w-xs max-h-80 overflow-y-auto">
+                                                                    <button onclick="this.closest('.fixed').classList.add('hidden')" class="float-right text-slate-400 hover:text-slate-600 text-sm leading-none">&times;</button>
+                                                                    <div class="space-y-1 mt-1">
+                                                                        @foreach($log->metadata as $campo => $valor)
+                                                                            @if(is_array($valor) && isset($valor['old']) && isset($valor['new']))
+                                                                                <div class="flex items-start gap-1 text-[11px]">
+                                                                                    <span class="font-medium text-slate-600 shrink-0">{{ $campo }}:</span>
+                                                                                    <div class="flex flex-wrap items-center gap-0.5">
+                                                                                        <span class="line-through text-rose-500">{{ $valor['old'] ?? '' }}</span>
+                                                                                        <svg class="h-2.5 w-2.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                                                                        <span class="text-emerald-600 font-medium">{{ $valor['new'] ?? '' }}</span>
+                                                                                    </div>
                                                                                 </div>
-                                                                            </div>
-                                                                        @elseif(is_string($campo))
-                                                                            <div class="text-xs text-slate-500">
-                                                                                <span class="font-medium text-slate-600">{{ $campo }}:</span>
-                                                                                <span>{{ is_string($valor) ? $valor : json_encode($valor) }}</span>
-                                                                            </div>
-                                                                        @endif
-                                                                    @endforeach
+                                                                            @elseif(is_string($campo))
+                                                                                <div class="text-[11px] text-slate-500">
+                                                                                    <span class="font-medium text-slate-600">{{ $campo }}:</span>
+                                                                                    <span>{{ is_string($valor) ? $valor : json_encode($valor) }}</span>
+                                                                                </div>
+                                                                            @endif
+                                                                        @endforeach
+                                                                    </div>
                                                                 </div>
-                                                            @elseif($log->metadata)
-                                                                <span class="text-xs text-slate-400 italic">{{ is_string($log->metadata) ? $log->metadata : 'Sin detalles' }}</span>
-                                                            @else
-                                                                <span class="text-xs text-slate-400 italic">Sin cambios registrados</span>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                            </div>
+                                                        @else
+                                                            <span class="text-[10px] text-slate-400 italic">—</span>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>

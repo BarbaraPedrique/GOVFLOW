@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\UserSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -23,7 +24,7 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $user = Auth::user();
 
-            if ($user->status !== 'activo') {
+            if ($user->status === 'pendiente') {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
@@ -33,7 +34,14 @@ class LoginController extends Controller
                 ])->onlyInput('email');
             }
 
+            if ($user->status === 'suspendido') {
+                $request->session()->regenerate();
+                UserSession::create(['user_id' => $user->id, 'logged_in_at' => now()]);
+                return redirect()->intended('/inicio');
+            }
+
             $request->session()->regenerate();
+            UserSession::create(['user_id' => $user->id, 'logged_in_at' => now()]);
             return redirect()->intended('/inicio');
         }
 
@@ -44,6 +52,15 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        if ($user) {
+            $session = UserSession::where('user_id', $user->id)->whereNull('logged_out_at')->latest()->first();
+            if ($session) {
+                $session->breaks()->whereNull('break_end')->update(['break_end' => now()]);
+                $session->update(['logged_out_at' => now()]);
+            }
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

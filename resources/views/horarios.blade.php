@@ -17,6 +17,7 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-10 fixed right-0 left-64 top-0 z-30">
         <div><h2 class="text-slate-800 font-semibold text-lg">Horario Semanal</h2></div>
         <div class="flex items-center gap-6">
+            @include('partials.break-buttons')
             @include('partials.notification-bell')
             <div class="relative" x-data="{ open: false }">
                 <div @click="open = !open" class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-all">

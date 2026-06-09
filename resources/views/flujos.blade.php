@@ -21,6 +21,7 @@
             </div>
 
             <div class="flex items-center gap-6">
+                @include('partials.break-buttons')
                 @include('partials.notification-bell')
                 <div class="relative" x-data="{ open: false }">
                     <div @click="open = !open" class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-all">
@@ -33,39 +34,221 @@
             </div>
         </header>
 
-        <main class="flex-1 p-10 mt-16 max-w-[1600px] w-full mx-auto space-y-8" x-data="{ selectedFlujo: {{ $flujos->first()?->id ?? 'null' }}, accordion: {} }">
+        <main class="flex-1 p-10 mt-16 max-w-[1600px] w-full mx-auto space-y-8" x-data="{
+    selectedFlujo: {{ $flujos->first()?->id ?? 'null' }},
+    accordion: {},
+    pasoModal: false,
+    pasoActual: null,
+    mensajePaso: '',
+    revisionModal: false,
+    revisionActual: null,
+    revisionAccion: '',
+    revisionComentario: '',
+    csrf: '{{ csrf_token() }}',
+    flujoEstados: {{ json_encode($flujos->mapWithKeys(fn($f) => [$f->id => $f->estado])) }},
+    flujoNombres: {{ json_encode($flujos->mapWithKeys(fn($f) => [$f->id => $f->codigo . ' — ' . $f->nombre])) }},
+    misPasos: {{ json_encode($misPasosPendientes->map(fn($p) => [
+        'id' => $p->id,
+        'paso_nombre' => $p->paso_nombre,
+        'paso_index' => $p->paso_index,
+        'estado' => $p->estado,
+        'fecha_limite' => $p->fecha_limite?->format('d/m/Y H:i'),
+        'flujo_nombre' => $p->ejecucion?->flujoTrabajo?->nombre ?? '—',
+        'checklist' => ($p->ejecucion->flujoTrabajo->pasos ?? [])[$p->paso_index]['checklist'] ?? [],
+    ])->values()) }},
+    misRevisiones: {{ json_encode($pendientesRevision->map(fn($p) => [
+        'id' => $p->id,
+        'paso_nombre' => $p->paso_nombre,
+        'paso_index' => $p->paso_index,
+        'flujo_nombre' => $p->ejecucion?->flujoTrabajo?->nombre ?? '—',
+        'fecha_limite' => $p->fecha_limite?->format('d/m/Y H:i'),
+    ])->values()) }},
+    abrirPaso(id) {
+        this.pasoActual = this.misPasos.find(p => p.id === id);
+        this.mensajePaso = '';
+        this.pasoModal = true;
+    },
+    completarPaso() {
+        if (!this.pasoActual) return;
+        const form = new FormData();
+        form.append('mensaje', this.mensajePaso);
+        const fileInput = document.getElementById('archivo_paso');
+        if (fileInput?.files[0]) form.append('archivo', fileInput.files[0]);
+        fetch('{{ url('/flujos/paso') }}/' + this.pasoActual.id + '/completar', { method: 'POST', headers: { 'X-CSRF-TOKEN': this.csrf, 'Accept': 'application/json' }, body: form })
+            .then(r => r.json()).then(d => {
+                if (d.success) { this.pasoModal = false; location.reload(); } else alert(d.message || 'Error al completar paso.');
+            }).catch(e => alert('Error de red: ' + e.message));
+    },
+    abrirRevision(p) {
+        this.revisionActual = p;
+        this.revisionAccion = '';
+        this.revisionComentario = '';
+        this.revisionModal = true;
+    },
+    enviarRevision() {
+        if (!this.revisionActual || !this.revisionAccion) return;
+        fetch('{{ url('/flujos/paso') }}/' + this.revisionActual.id + '/revisar', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ accion: this.revisionAccion, comentario: this.revisionComentario })
+        }).then(r => r.json()).then(d => {
+            if (d.success) { this.revisionModal = false; location.reload(); } else alert(d.message || 'Error al revisar.');
+        }).catch(e => alert('Error de red: ' + e.message));
+    },
+    eliminarFlujo(id) {
+        if (!id) return;
+        if (!confirm('¿Estás seguro de eliminar este flujo? Esta acción no se puede deshacer.')) return;
+        fetch('{{ url('/flujos-trabajo') }}/' + id, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': this.csrf, 'Accept': 'application/json' }
+        }).then(r => r.json()).then(d => {
+            if (d.success || d.id) { location.reload(); } else alert(d.message || 'Error al eliminar el flujo.');
+        }).catch(e => alert('Error de red: ' + e.message));
+    }
+}">
+
+    <div class="flex items-center gap-3">
+        <a href="{{ route('flujos', ['ver' => 'mios']) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold {{ request('ver') === 'mios' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100' }}">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+            Mis Flujos
+        </a>
+        <a href="{{ route('flujos') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold {{ request('ver') !== 'mios' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100' }}">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+            Todos los Flujos
+        </a>
+    </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">Línea de Tiempo del Flujo</h1>
+                    <p class="text-slate-500 text-sm">Monitoreo de estados, actores, actividades, reglas y rutas de transición.</p>
+                </div>
+                <span x-show="selectedFlujo && flujoEstados[selectedFlujo]"
+                      :class="{
+                          'bg-emerald-50 text-emerald-700 border-emerald-200': flujoEstados[selectedFlujo] === 'Activo',
+                          'bg-amber-50 text-amber-700 border-amber-200': flujoEstados[selectedFlujo] === 'Borrador' || flujoEstados[selectedFlujo] === 'Pausado',
+                          'bg-blue-50 text-blue-700 border-blue-200': flujoEstados[selectedFlujo] === 'Completado'
+                      }"
+                      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border">
+                    <span class="h-2 w-2 rounded-full"
+                          :class="{
+                              'bg-emerald-500 animate-pulse': flujoEstados[selectedFlujo] === 'Activo',
+                              'bg-amber-500': flujoEstados[selectedFlujo] === 'Borrador' || flujoEstados[selectedFlujo] === 'Pausado',
+                              'bg-blue-500': flujoEstados[selectedFlujo] === 'Completado'
+                          }"></span>
+                    <span x-text="'Estado: ' + flujoEstados[selectedFlujo]"></span>
+                </span>
+            </div>
+
+            @if($esSuperAdmin || !$verMios)
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                    <form method="GET" action="{{ route('flujos') }}">
+                        @if(request('ver') === 'mios')
+                            <input type="hidden" name="ver" value="mios">
+                        @endif
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Filtrar por Equipo</label>
+                        <select name="equipo_id" onchange="this.form.submit()" class="w-full sm:w-96 rounded-xl border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                            <option value="">Todos los equipos</option>
+                            @foreach($equipos as $equipo)
+                                <option value="{{ $equipo->id }}" {{ request('equipo_id') == $equipo->id ? 'selected' : '' }}>{{ $equipo->nombre }}</option>
+                            @endforeach
+                        </select>
+                        <noscript><button type="submit" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm">Filtrar</button></noscript>
+                    </form>
+                </div>
+            @endif
 
             @if($flujos->isEmpty())
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-16 text-center">
                     <svg class="h-16 w-16 text-slate-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                    <h3 class="text-lg font-semibold text-slate-600 mb-1">No hay flujos de trabajo</h3>
-                    <p class="text-slate-400 text-sm">Crea un flujo desde el panel de administración para visualizarlo aquí.</p>
+                    <h3 class="text-lg font-semibold text-slate-600 mb-1">{{ $verMios ? 'No tienes flujos asignados' : 'No hay flujos de trabajo' }}</h3>
+                    <p class="text-slate-400 text-sm">{{ $verMios ? 'Aún no te han asignado pasos en ningún flujo.' : 'Crea un flujo desde el panel de administración para visualizarlo aquí.' }}</p>
+                </div>
+            @elseif($verMios)
+                <div class="space-y-4">
+                    @foreach($flujos as $flujo)
+                        @php
+                            $misPasosFlujo = $misPasosPendientes->filter(fn($p) => $p->ejecucion?->flujo_trabajo_id === $flujo->id);
+                            $ejecucionFlujo = $misPasosFlujo->first()?->ejecucion;
+                            $counts = $ejecucionFlujo && isset($pasoCounts[$ejecucionFlujo->id])
+                                ? $pasoCounts[$ejecucionFlujo->id]
+                                : null;
+                            $totalAsignados = $counts?->total ?? $misPasosFlujo->count();
+                            $completadosCount = $counts?->completados ?? 0;
+                        @endphp
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <span class="text-xs font-semibold text-blue-600 uppercase tracking-wider">{{ $flujo->codigo }}</span>
+                                    <h3 class="text-xl font-bold text-slate-800 mt-1">{{ $flujo->nombre }}</h3>
+                                    <p class="text-sm text-slate-500">{{ $flujo->departamento }}@if($flujo->equipo) · {{ $flujo->equipo->nombre }}@endif</p>
+                                </div>
+                                <div class="text-right text-sm">
+                                    <span class="text-slate-400">Progreso:</span>
+                                    <p class="font-semibold text-slate-700">{{ $completadosCount }}/{{ $totalAsignados }} pasos</p>
+                                </div>
+                            </div>
+                            @if($misPasosFlujo->isNotEmpty())
+                                <div class="mt-4 space-y-2">
+                                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tus pasos pendientes</p>
+                                    @foreach($misPasosFlujo as $paso)
+                                        @php
+                                            $pasoDef = ($flujo->pasos ?? [])[$paso->paso_index] ?? [];
+                                            $checklist = $pasoDef['checklist'] ?? [];
+                                            $revisorId = $pasoDef['revisor_id'] ?? null;
+                                        @endphp
+                                        <div class="flex items-start justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-semibold text-slate-700">{{ $paso->paso_nombre }}</p>
+                                                @if(!empty($checklist))
+                                                    <div class="mt-1.5 space-y-0.5">
+                                                        @foreach($checklist as $ci)
+                                                            <div class="flex items-center gap-1.5">
+                                                                <svg class="h-2.5 w-2.5 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7" /></svg>
+                                                                <span class="text-[11px] text-slate-500">{{ $ci['item'] ?? '' }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                                @if($paso->fecha_limite)
+                                                    <p class="text-xs mt-0.5 {{ now()->greaterThan($paso->fecha_limite) ? 'text-rose-500 font-semibold' : 'text-amber-500' }}">
+                                                        Límite: {{ $paso->fecha_limite->format('d/m/Y H:i') }}
+                                                    </p>
+                                                @endif
+                                            </div>
+                                            <div class="shrink-0 ml-3 flex flex-col items-end gap-1.5">
+                                                <button @click="abrirPaso({{ $paso->id }})" class="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                                                    Completar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
                 </div>
             @else
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <h1 class="text-2xl font-bold text-slate-800">Línea de Tiempo del Flujo</h1>
-                        <p class="text-slate-500 text-sm">Monitoreo de estados, actores, actividades, reglas y rutas de transición.</p>
-                    </div>
-                    <div>
-                        <span class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-semibold border border-emerald-200">
-                            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Estado: En Ejecución
-                        </span>
-                    </div>
-                </div>
-
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Seleccionar Flujo</label>
                     <select x-model="selectedFlujo" class="w-full sm:w-96 rounded-xl border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
                         @foreach($flujos as $flujo)
-                            <option value="{{ $flujo->id }}">{{ $flujo->codigo }} — {{ $flujo->nombre }} ({{ $flujo->departamento }})</option>
+                            <option value="{{ $flujo->id }}">{{ $flujo->codigo }} — {{ $flujo->nombre }} ({{ $flujo->departamento }})@if($flujo->equipo) — {{ $flujo->equipo->nombre }}@endif</option>
                         @endforeach
                     </select>
                 </div>
 
                 @foreach($flujos as $flujo)
                     <div x-show="selectedFlujo == {{ $flujo->id }}" x-cloak>
+                        <div class="flex items-center gap-3 mb-4 text-xs text-slate-400">
+                            <span>Creado por <strong class="text-slate-600">{{ $flujo->user?->apodo ?? $flujo->user?->name ?? '—' }}</strong></span>
+                            @if($flujo->equipo)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md font-medium">
+                                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                    {{ $flujo->equipo->nombre }}
+                                </span>
+                            @endif
+                        </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-start">
                                 <div class="space-y-1">
@@ -97,6 +280,77 @@
                                 </div>
                             </div>
                         </div>
+
+                        @php $pasosFlujo = $flujo->pasos ?? []; @endphp
+                        @if(!empty($pasosFlujo))
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+                                <div class="px-6 py-4 bg-slate-50 border-b border-slate-100">
+                                    <h3 class="text-base font-bold text-slate-700">Pasos del Flujo ({{ count($pasosFlujo) }})</h3>
+                                </div>
+                                <div class="p-6 space-y-4">
+                                    @foreach($pasosFlujo as $i => $paso)
+                                        @php
+                                            $asignadosNombres = [];
+                                            $asignadosIds = $paso['asignados_ids'] ?? [];
+                                            if (!empty($asignadosIds)) {
+                                                foreach ($asignadosIds as $aid) {
+                                                    $uid = (int) $aid;
+                                                    $asignadosNombres[] = isset($pasoUsuarios[$uid]) ? $pasoUsuarios[$uid]->name : "Usuario #{$uid}";
+                                                }
+                                            }
+                                            if (empty($asignadosNombres) && !empty($paso['asignacion_usuario_id']) && isset($pasoUsuarios[(int) $paso['asignacion_usuario_id']])) {
+                                                $asignadosNombres[] = $pasoUsuarios[(int) $paso['asignacion_usuario_id']]->name;
+                                            }
+                                            if (empty($asignadosNombres) && !empty($paso['asignacion_rol'])) {
+                                                $asignadosNombres[] = ucfirst(str_replace('_', ' ', $paso['asignacion_rol']));
+                                            }
+                                            $revisorId = $paso['revisor_id'] ?? null;
+                                            $revisorNombre = '';
+                                            if ($revisorId && isset($pasoUsuarios[(int) $revisorId])) {
+                                                $revisorNombre = $pasoUsuarios[(int) $revisorId]->name;
+                                            }
+                                        @endphp
+                                        <div class="flex items-start gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+                                            <div class="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center shrink-0 text-xs font-bold">{{ $i + 1 }}</div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center justify-between gap-4">
+                                                    <div>
+                                                        <p class="text-sm font-semibold text-slate-700">{{ $paso['nombre'] ?? 'Paso ' . ($i + 1) }}</p>
+                                                        @if(!empty($paso['descripcion']))
+                                                            <p class="text-xs text-slate-500 mt-0.5">{{ $paso['descripcion'] }}</p>
+                                                        @endif
+                                                    </div>
+                                                    <div class="shrink-0 text-right text-xs space-y-1">
+                                                        @if(!empty($asignadosNombres))
+                                                            <div class="space-y-0.5">
+                                                                @foreach($asignadosNombres as $an)
+                                                                    <span class="inline-block px-2 py-0.5 rounded-md font-medium bg-blue-50 text-blue-600 mr-1">{{ $an }}</span>
+                                                                @endforeach
+                                                            </div>
+                                                        @else
+                                                            <span class="inline-block px-2 py-0.5 rounded-md font-medium bg-slate-100 text-slate-400">Sin asignar</span>
+                                                        @endif
+                                                        @if($revisorNombre)
+                                                            <div class="mt-1">
+                                                                <span class="text-[10px] text-amber-600 font-medium">Revisor: {{ $revisorNombre }}</span>
+                                                            </div>
+                                                        @endif
+                                                        @if(!empty($paso['fecha_limite_horas']))
+                                                            <p class="text-amber-600 font-medium">{{ $paso['fecha_limite_horas'] }}h límite</p>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                @if(!empty($paso['prioridad']) && $paso['prioridad'] !== 'media')
+                                                    <span class="inline-block mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full {{ $paso['prioridad'] === 'alta' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500' }}">
+                                                        {{ ucfirst($paso['prioridad']) }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
 
                         <div class="relative" x-data="{ expanded: {} }">
                             <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-slate-200 z-0"></div>
@@ -263,6 +517,165 @@
                     </div>
                 @endforeach
             @endif
+
+            @if(!$verMios)
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <h3 class="text-base font-bold text-slate-700 mb-4">Mis Pasos Asignados</h3>
+                    @if($misPasosPendientes->isEmpty())
+                        <p class="text-sm text-slate-400">No tienes pasos pendientes.</p>
+                    @else
+                        <div class="space-y-3">
+                            @foreach($misPasosPendientes as $paso)
+                                @php
+                                    $pasoDef = ($paso->ejecucion->flujoTrabajo->pasos ?? [])[$paso->paso_index] ?? [];
+                                    $checklist = $pasoDef['checklist'] ?? [];
+                                @endphp
+                                <div class="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold text-slate-700">{{ $paso->paso_nombre }}</p>
+                                        <p class="text-xs text-slate-400 truncate">Flujo: {{ $paso->ejecucion?->flujoTrabajo?->nombre ?? '—' }}</p>
+                                        @if(!empty($checklist))
+                                            <div class="mt-2 space-y-1">
+                                                <p class="text-[10px] font-semibold text-slate-400 uppercase">Pasos internos:</p>
+                                                @foreach($checklist as $ci)
+                                                    <div class="flex items-center gap-1.5">
+                                                        <svg class="h-3 w-3 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7" /></svg>
+                                                        <span class="text-xs text-slate-500">{{ $ci['item'] ?? '' }}</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        @if($paso->fecha_limite)
+                                            <p class="text-xs mt-1 {{ now()->greaterThan($paso->fecha_limite) ? 'text-rose-500 font-semibold' : 'text-amber-500' }}">
+                                                Límite: {{ $paso->fecha_limite->format('d/m/Y H:i') }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                    <div class="flex items-center gap-3 shrink-0 ml-4">
+                                        <span class="text-xs font-medium px-2 py-1 rounded-md {{ $paso->estado === 'en_progreso' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600' }}">
+                                            {{ $paso->estado === 'en_progreso' ? 'En progreso' : 'Pendiente' }}
+                                        </span>
+                                        <button @click="abrirPaso({{ $paso->id }})" class="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                                            Completar
+                                        </button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <h3 class="text-base font-bold text-slate-700 mb-4">Revisiones Pendientes</h3>
+                    @if($pendientesRevision->isEmpty())
+                        <p class="text-sm text-slate-400">No tienes pasos pendientes de revisión.</p>
+                    @else
+                        <div class="space-y-3">
+                            @foreach($pendientesRevision as $paso)
+                                <div class="flex items-center justify-between p-4 rounded-xl border border-amber-100 bg-amber-50/30">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold text-slate-700">{{ $paso->paso_nombre }}</p>
+                                        <p class="text-xs text-slate-500">Flujo: {{ $paso->ejecucion?->flujoTrabajo?->nombre ?? '—' }}</p>
+                                        <p class="text-xs text-amber-600 font-medium mt-1">Esperando tu revisión</p>
+                                    </div>
+                                    <div class="flex items-center gap-2 shrink-0 ml-4">
+                                        <button @click="abrirRevision({id: {{ $paso->id }}, paso_nombre: '{{ $paso->paso_nombre }}', flujo_nombre: '{{ $paso->ejecucion?->flujoTrabajo?->nombre ?? '—' }}'})" class="px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition-colors">
+                                            Revisar
+                                        </button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            @if(($esSuperAdmin || in_array(Auth::user()->role?->slug, ['administrador', 'gerente'])) && !$verMios)
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <h3 class="text-base font-bold text-slate-700 mb-4">Iniciar Flujo</h3>
+                    <div class="flex items-center gap-4">
+                        <select x-model="selectedFlujo" class="w-full sm:w-96 rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                            <option value="">Seleccionar flujo...</option>
+                            @foreach($flujos as $flujo)
+                                <option value="{{ $flujo->id }}">{{ $flujo->codigo }} — {{ $flujo->nombre }}</option>
+                            @endforeach
+                        </select>
+                        <button @click="if(!selectedFlujo) { alert('Selecciona un flujo.'); return; } fetch('{{ url('/flujos') }}/'+selectedFlujo+'/iniciar',{method:'POST',headers:{'X-CSRF-TOKEN':csrf,'Accept':'application/json'}}).then(r=>r.json()).then(d=>{if(d.success)location.reload();else alert(d.message||'Error al iniciar flujo.')}).catch(e=>alert('Error de red: '+e.message))" class="px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors">
+                            Iniciar ejecución
+                        </button>
+                        <button @click="eliminarFlujo(selectedFlujo)" x-show="selectedFlujo" class="px-4 py-2.5 bg-rose-600 text-white text-sm font-semibold rounded-xl hover:bg-rose-700 transition-colors">
+                            Eliminar flujo
+                        </button>
+                    </div>
+                    <div x-show="selectedFlujo" class="mt-2">
+                        <span class="text-[11px] text-slate-400">Flujo seleccionado: <span x-text="selectedFlujo ? (flujoNombres[selectedFlujo] || 'ID: ' + selectedFlujo) : ''"></span></span>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Modal completar paso --}}
+            <div x-show="pasoModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/30" @click.outside="pasoModal = false">
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 space-y-4">
+                    <h3 class="text-lg font-bold text-slate-800" x-text="'Completar: ' + (pasoActual?.paso_nombre || '')"></h3>
+                    <p class="text-sm text-slate-500" x-text="'Flujo: ' + (pasoActual?.flujo_nombre || '')"></p>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Pasos internos a seguir</label>
+                        <template x-if="pasoActual && pasoActual.checklist && pasoActual.checklist.length > 0">
+                            <div class="bg-slate-50 rounded-lg p-3 border border-slate-100 mb-3">
+                                <template x-for="(item, ci) in pasoActual.checklist" :key="ci">
+                                    <div class="flex items-center gap-2 py-0.5">
+                                        <svg class="h-3 w-3 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7" /></svg>
+                                        <span class="text-xs text-slate-500" x-text="item.item"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Mensaje (opcional)</label>
+                        <textarea x-model="mensajePaso" rows="3" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej: Adjunto documento aprobado..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Archivo (opcional)</label>
+                        <input type="file" id="archivo_paso" class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button @click="pasoModal = false" class="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors">Cancelar</button>
+                        <button @click="completarPaso" class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors">Marcar como completado</button>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Modal revisar paso --}}
+            <div x-show="revisionModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/30" @click.outside="revisionModal = false">
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 space-y-4">
+                    <h3 class="text-lg font-bold text-slate-800" x-text="'Revisar: ' + (revisionActual?.paso_nombre || '')"></h3>
+                    <p class="text-sm text-slate-500" x-text="'Flujo: ' + (revisionActual?.flujo_nombre || '')"></p>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Decisión</label>
+                        <div class="flex gap-3">
+                            <label class="flex items-center gap-2 px-4 py-2.5 rounded-xl border cursor-pointer transition-colors" :class="revisionAccion === 'aprobar' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 hover:border-slate-300'" @click="revisionAccion = 'aprobar'">
+                                <input type="radio" name="revision_accion" value="aprobar" x-model="revisionAccion" class="sr-only">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7" /></svg>
+                                <span class="text-sm font-semibold">Aprobar</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-4 py-2.5 rounded-xl border cursor-pointer transition-colors" :class="revisionAccion === 'rechazar' ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-slate-200 hover:border-slate-300'" @click="revisionAccion = 'rechazar'">
+                                <input type="radio" name="revision_accion" value="rechazar" x-model="revisionAccion" class="sr-only">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M6 18L18 6M6 6l12 12" /></svg>
+                                <span class="text-sm font-semibold">Rechazar</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Comentario</label>
+                        <textarea x-model="revisionComentario" rows="3" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 px-4 py-2.5 border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Explica el motivo de tu decisión..."></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button @click="revisionModal = false" class="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors">Cancelar</button>
+                        <button @click="enviarRevision" :disabled="!revisionAccion" :class="revisionAccion === 'aprobar' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'" class="px-4 py-2 text-white text-sm font-semibold rounded-xl transition-colors" x-text="revisionAccion === 'aprobar' ? 'Aprobar paso' : revisionAccion === 'rechazar' ? 'Rechazar paso' : 'Selecciona una acción'"></button>
+                    </div>
+                </div>
+            </div>
         @include('partials.solicitar-modal')
         </main>
     </div>

@@ -17,6 +17,7 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-10 fixed right-0 left-64 top-0 z-30">
         <div><h2 class="text-slate-800 font-semibold text-lg">Tareas</h2></div>
         <div class="flex items-center gap-6">
+            @include('partials.break-buttons')
             <div class="relative" x-data="{ openNotis: false, noLeidas: 0, notis: [] }"
                  x-init="fetch('{{ route('notificaciones.index') }}?ajax=1')
                     .then(r=>r.json()).then(d=>{ noLeidas=d.noLeidas; notis=d.notificaciones })">
@@ -178,15 +179,17 @@
             </div>
 
             <div x-show="$store.tareas.filter(t=>t.completada).length>0" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100">
-                    <h3 class="text-sm font-semibold text-slate-700">Completadas (<span x-text="$store.tareas.filter(t=>t.completada).length"></span>)</h3>
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-slate-700">Historial (<span x-text="$store.tareas.filter(t=>t.completada).length"></span>)</h3>
+                    <span class="text-[10px] text-slate-400">Completados en los últimos 7 días</span>
                 </div>
                 <div class="divide-y divide-slate-100">
-                    <template x-for="tarea in $store.tareas.filter(t=>t.completada)" :key="tarea.id">
+                    <template x-for="tarea in $store.tareas.filter(t=>t.completada).sort((a,b)=>new Date(b.completed_at)-new Date(a.completed_at))" :key="tarea.id">
                         <div class="px-6 py-3 flex items-center gap-3 hover:bg-slate-50">
                             <button @click="toggleCompletada(tarea)" class="text-emerald-500"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button>
                             <span class="text-sm text-slate-500 line-through flex-1" x-text="tarea.titulo"></span>
                             <span class="text-xs text-slate-400 capitalize" x-text="tarea.prioridad"></span>
+                            <span class="text-[10px] text-slate-300" x-text="tarea.completed_at ? new Date(tarea.completed_at).toLocaleDateString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : ''"></span>
                         </div>
                     </template>
                 </div>
@@ -262,6 +265,21 @@
                 </form>
             </div>
         </div>
+        <!-- Delete Confirm Modal -->
+        <div x-show="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 text-center">
+                <div class="mx-auto h-12 w-12 rounded-full bg-rose-100 flex items-center justify-center mb-4">
+                    <svg class="h-6 w-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">Eliminar tarea</h3>
+                <p class="text-sm text-slate-500 mb-6" x-html="'¿Estás seguro de eliminar <b>&quot;' + (deleteTitulo || '') + '&quot;</b>?'"></p>
+                <div class="flex gap-3 justify-center">
+                    <button @click="showDeleteModal = false; deleteId = null; deleteTitulo = null" class="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancelar</button>
+                    <button @click="confirmDelete()" class="px-5 py-2 rounded-xl bg-rose-600 text-sm font-semibold text-white hover:bg-rose-700">Eliminar</button>
+                </div>
+            </div>
+        </div>
+        </div>
     @include('partials.solicitar-modal')
     </main>
 
@@ -273,38 +291,62 @@ document.addEventListener('alpine:init', () => {
         nuevaTarea: { titulo: '', prioridad: 'media', categoria: '', fecha_vencimiento: '', hora_inicio: '', hora_fin: '', receso: '', equipo_id: '' },
         editModal: false,
         editForm: { id: null, titulo: '', descripcion: '', prioridad: 'media', categoria: '', equipo_id: '', fecha_vencimiento: '', hora_inicio: '', hora_fin: '', receso: '' },
+        showDeleteModal: false,
+        deleteId: null,
+        deleteTitulo: null,
         dragTarea: null,
         csrf: '{{ csrf_token() }}',
+        urlBase: window.location.href.replace(window.location.search, '').replace(/\/$/, ''),
 
         agregarTarea() {
             const form = new FormData();
             form.append('titulo', this.nuevaTarea.titulo);
             form.append('prioridad', this.nuevaTarea.prioridad);
-            form.append('categoria', this.nuevaTarea.categoria);
-            form.append('fecha_vencimiento', this.nuevaTarea.fecha_vencimiento);
-            form.append('hora_inicio', this.nuevaTarea.hora_inicio);
-            form.append('hora_fin', this.nuevaTarea.hora_fin);
-            form.append('receso', this.nuevaTarea.receso);
-            form.append('equipo_id', this.nuevaTarea.equipo_id);
+            if (this.nuevaTarea.categoria) form.append('categoria', this.nuevaTarea.categoria);
+            if (this.nuevaTarea.fecha_vencimiento) form.append('fecha_vencimiento', this.nuevaTarea.fecha_vencimiento);
+            if (this.nuevaTarea.hora_inicio) form.append('hora_inicio', this.nuevaTarea.hora_inicio);
+            if (this.nuevaTarea.hora_fin) form.append('hora_fin', this.nuevaTarea.hora_fin);
+            if (this.nuevaTarea.receso) form.append('receso', this.nuevaTarea.receso);
+            if (this.nuevaTarea.equipo_id) form.append('equipo_id', this.nuevaTarea.equipo_id);
 
-            fetch('{{ route('tareas.store') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': this.csrf }, body: form })
-                .then(r => r.redirected ? window.location.href = r.url : r.json())
+            fetch(this.urlBase, { method: 'POST', headers: { 'X-CSRF-TOKEN': this.csrf, 'Accept': 'application/json' }, body: form })
+                .then(r => r.json())
                 .then(data => {
                     if (data?.success) {
-                        const t = { id: data.id, titulo: this.nuevaTarea.titulo, prioridad: this.nuevaTarea.prioridad, categoria: this.nuevaTarea.categoria, fecha_vencimiento: this.nuevaTarea.fecha_vencimiento, hora_inicio: this.nuevaTarea.hora_inicio, hora_fin: this.nuevaTarea.hora_fin, receso: this.nuevaTarea.receso, completada: false, orden: 999 };
+                        const t = data.tarea || { id: data.id, titulo: this.nuevaTarea.titulo, prioridad: this.nuevaTarea.prioridad, categoria: this.nuevaTarea.categoria, fecha_vencimiento: this.nuevaTarea.fecha_vencimiento, hora_inicio: this.nuevaTarea.hora_inicio, hora_fin: this.nuevaTarea.hora_fin, receso: this.nuevaTarea.receso, equipo_id: this.nuevaTarea.equipo_id, completada: false, completed_at: null, orden: 999 };
                         Alpine.store('tareas').push(t);
                         this.nuevaTarea = { titulo: '', prioridad: 'media', categoria: '', fecha_vencimiento: '', hora_inicio: '', hora_fin: '', receso: '', equipo_id: '' };
-                    } else { window.location.reload(); }
-                });
+                    }
+                })
+                .catch(e => console.error('Error al crear tarea:', e));
         },
         toggleCompletada(tarea) {
-            fetch('{{ url('/tareas') }}/'+tarea.id, { method: 'PUT', headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json' }, body: JSON.stringify({ completada: !tarea.completada }) })
-                .then(r => r.json()).then(d => { if(d.success) tarea.completada = !tarea.completada; });
+            const nueva = !tarea.completada;
+            fetch(this.urlBase+'/'+tarea.id, { method: 'PUT', headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ completada: nueva }) })
+                .then(r => r.json()).then(d => {
+                    if(d.success) { tarea.completada = nueva; tarea.completed_at = nueva ? new Date().toISOString() : null; }
+                })
+                .catch(e => console.error('Error al completar tarea:', e));
         },
         eliminarTarea(tarea) {
-            if(!confirm('¿Eliminar esta tarea?')) return;
-            fetch('{{ url('/tareas') }}/'+tarea.id, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': this.csrf } })
-                .then(r => r.json()).then(d => { if(d.success) Alpine.store('tareas', Alpine.store('tareas').filter(t => t.id !== tarea.id)); });
+            this.deleteId = tarea.id;
+            this.deleteTitulo = tarea.titulo;
+            this.showDeleteModal = true;
+        },
+        confirmDelete() {
+            const id = this.deleteId;
+            if (!id) return;
+            fetch(this.urlBase+'/'+id, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': this.csrf, 'Accept': 'application/json' } })
+                .then(r => r.json())
+                .then(d => {
+                    if(d.success) Alpine.store('tareas', Alpine.store('tareas').filter(t => t.id !== id));
+                })
+                .catch(e => console.error(e))
+                .finally(() => {
+                    this.showDeleteModal = false;
+                    this.deleteId = null;
+                    this.deleteTitulo = null;
+                });
         },
         moverTarea(ev, prioridad) {
             const id = this.dragTarea;
@@ -313,8 +355,9 @@ document.addEventListener('alpine:init', () => {
             if (!tarea) return;
             const oldP = tarea.prioridad;
             tarea.prioridad = prioridad;
-            fetch('{{ url('/tareas') }}/'+id, { method: 'PUT', headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json' }, body: JSON.stringify({ prioridad }) })
-                .then(r => r.json()).then(d => { if(!d.success) tarea.prioridad = oldP; });
+            fetch(this.urlBase+'/'+id, { method: 'PUT', headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ prioridad }) })
+                .then(r => r.json()).then(d => { if(!d.success) tarea.prioridad = oldP; })
+                .catch(() => { tarea.prioridad = oldP; });
             this.dragTarea = null;
         },
         editarTarea(tarea) {
@@ -342,7 +385,7 @@ document.addEventListener('alpine:init', () => {
                 hora_fin: this.editForm.hora_fin || null,
                 receso: this.editForm.receso || null,
             };
-            fetch('{{ url('/tareas') }}/'+this.editForm.id, { method: 'PUT', headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+            fetch(this.urlBase+'/'+this.editForm.id, { method: 'PUT', headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
                 .then(r => r.json()).then(d => {
                     if(d.success) {
                         const t = Alpine.store('tareas').find(t => t.id === this.editForm.id);

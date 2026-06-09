@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Equipo;
+use App\Models\FlujoPasoAsignacion;
 use App\Models\LogAuditoria;
 use App\Models\Notificacion;
 use App\Models\Tarea;
@@ -78,8 +79,8 @@ class SolicitudClienteController extends Controller
                 'tipo' => 'solicitud',
                 'titulo' => $titulo,
                 'mensaje' => $request->descripcion,
-                'icono' => 'clipboard',
-                'color' => 'blue',
+                'icono' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>',
+                'color' => 'text-blue-500',
                 'url' => route('solicitudes.mis'),
             ]);
             $created++;
@@ -114,7 +115,12 @@ class SolicitudClienteController extends Controller
 
         $equiposDisponibles = Equipo::all();
 
-        return view('solicitudes_index', compact('pendientes', 'historial', 'equiposDisponibles'));
+        $revisionesFlujo = FlujoPasoAsignacion::where('revisor_id', $user->id)
+            ->where('revision_estado', 'en_revision')
+            ->with(['ejecucion.flujoTrabajo'])
+            ->get();
+
+        return view('solicitudes_index', compact('pendientes', 'historial', 'equiposDisponibles', 'revisionesFlujo'));
     }
 
     public function aprobarSolicitud(Tarea $tarea)
@@ -135,8 +141,8 @@ class SolicitudClienteController extends Controller
                     'tipo' => 'solicitud_aprobada',
                     'titulo' => $titulo,
                     'mensaje' => "Tu solicitud \"{$tarea->titulo}\" ha sido aprobada por {$user->name}.",
-                    'icono' => 'check',
-                    'color' => 'green',
+                    'icono' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+                    'color' => 'text-emerald-500',
                     'url' => route('solicitudes.mis'),
                 ]);
             }
@@ -183,8 +189,8 @@ class SolicitudClienteController extends Controller
                     'tipo' => 'solicitud_rechazada',
                     'titulo' => $titulo,
                     'mensaje' => $mensaje,
-                    'icono' => 'x',
-                    'color' => 'red',
+                    'icono' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+                    'color' => 'text-rose-500',
                     'url' => route('solicitudes.mis'),
                 ]);
 
@@ -194,8 +200,8 @@ class SolicitudClienteController extends Controller
                         'tipo' => 'equipo_sugerido',
                         'titulo' => "Equipo sugerido: {$equipoSugerido->nombre}",
                         'mensaje' => "Se te ha sugerido el equipo \"{$equipoSugerido->nombre}\" como alternativa a \"{$equipoOriginal}\". Haz clic para crear una nueva solicitud.",
-                        'icono' => 'clipboard',
-                        'color' => 'blue',
+                        'icono' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>',
+                        'color' => 'text-blue-500',
                         'url' => route('solicitudes.mis'),
                     ]);
                 }

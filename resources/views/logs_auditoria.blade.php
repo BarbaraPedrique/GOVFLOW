@@ -17,6 +17,7 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-10 fixed right-0 left-64 top-0 z-30">
         <div><h2 class="text-slate-800 font-semibold text-lg">Registro de Auditoría</h2></div>
         <div class="flex items-center gap-6">
+            @include('partials.break-buttons')
             @include('partials.notification-bell')
             <div class="relative" x-data="{ open: false }">
                 <div @click="open = !open" class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-all">
@@ -57,49 +58,67 @@
             </form>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            <th class="px-6 py-4">Fecha/Hora</th>
-                            <th class="px-6 py-4">Usuario</th>
-                            <th class="px-6 py-4">Acción</th>
-                            <th class="px-6 py-4">Entidad</th>
-                            <th class="px-6 py-4">ID</th>
-                            <th class="px-6 py-4">Descripción</th>
-                            <th class="px-6 py-4">IP</th>
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm">
+            <table class="w-full text-[11px]">
+                <thead>
+                    <tr class="bg-slate-50 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                        <th class="px-2 py-2.5 w-[90px]">Fecha</th>
+                        <th class="px-2 py-2.5 w-[110px]">Usuario</th>
+                        <th class="px-2 py-2.5 w-[65px]">Acción</th>
+                        <th class="px-2 py-2.5 w-1/4">Entidad</th>
+                        <th class="px-2 py-2.5 w-2/5">Descripción</th>
+                        <th class="px-2 py-2.5 w-[40px]">Detalle</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse ($logs as $log)
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-2 py-2.5 text-slate-500 whitespace-nowrap">{{ $log->created_at->isoFormat('DD/MM/YY HH:mm') }}</td>
+                            <td class="px-2 py-2.5 text-slate-800 truncate max-w-[110px]" title="{{ $log->user?->name ?? '—' }}">{{ $log->user?->name ?? '—' }}</td>
+                            <td class="px-2 py-2.5">
+                                <span class="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap
+                                    @if(str_contains($log->accion, 'crear')) bg-blue-50 text-blue-700
+                                    @elseif(str_contains($log->accion, 'completar')) bg-emerald-50 text-emerald-700
+                                    @elseif(str_contains($log->accion, 'reabrir')) bg-amber-50 text-amber-700
+                                    @elseif(str_contains($log->accion, 'eliminar')) bg-rose-50 text-rose-700
+                                    @else bg-slate-50 text-slate-600
+                                    @endif">
+                                    {{ $log->accion }}
+                                </span>
+                            </td>
+                            <td class="px-2 py-2.5 text-slate-500 truncate max-w-[200px]" title="{{ $log->entidad_type }} (ID: {{ $log->entidad_id ?? '—' }})">
+                                {{ $log->entidad_type }} <span class="text-slate-400">#{{ $log->entidad_id ?? '—' }}</span>
+                            </td>
+                            <td class="px-2 py-2.5 text-slate-600 truncate max-w-[250px]" title="{{ $log->descripcion }}">{{ $log->descripcion }}</td>
+                            <td class="px-2 py-2.5">
+                                <button onclick="this.nextElementSibling.classList.remove('hidden')" class="text-[10px] font-semibold text-[#007BFF] hover:underline">Ver</button>
+                                <div class="hidden fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onclick="event.target===this&&this.classList.add('hidden')">
+                                    <div class="bg-white rounded-xl shadow-xl border border-slate-200 p-3 min-w-[220px] max-w-sm max-h-80 overflow-y-auto">
+                                        <button onclick="this.closest('.fixed').classList.add('hidden')" class="float-right text-slate-400 hover:text-slate-600 text-sm leading-none">&times;</button>
+                                        <div class="space-y-1.5 mt-1 text-xs">
+                                            <p><span class="font-semibold text-slate-600">Usuario:</span> {{ $log->user?->name ?? 'Sistema' }}</p>
+                                            <p><span class="font-semibold text-slate-600">Acción:</span> {{ $log->accion }}</p>
+                                            <p><span class="font-semibold text-slate-600">Entidad:</span> {{ $log->entidad_type }} #{{ $log->entidad_id ?? '—' }}</p>
+                                            <p><span class="font-semibold text-slate-600">Fecha:</span> {{ $log->created_at->isoFormat('DD/MM/YY HH:mm') }}</p>
+                                            <p><span class="font-semibold text-slate-600">IP:</span> {{ $log->ip_address ?? '—' }}</p>
+                                            <p><span class="font-semibold text-slate-600">Descripción:</span> {{ $log->descripcion }}</p>
+                                            @if($log->metadata)
+                                                <div><span class="font-semibold text-slate-600">Metadatos:</span>
+                                                    <pre class="text-[10px] text-slate-500 mt-0.5 bg-slate-50 p-1.5 rounded max-h-32 overflow-y-auto">{{ is_string($log->metadata) ? $log->metadata : json_encode($log->metadata, JSON_PRETTY_PRINT) }}</pre>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 font-mono text-xs">
-                        @forelse ($logs as $log)
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3.5 text-slate-500 whitespace-nowrap">{{ $log->created_at->isoFormat('DD/MM/YY HH:mm') }}</td>
-                                <td class="px-6 py-3.5 text-slate-800">{{ $log->user?->name ?? '—' }}</td>
-                                <td class="px-6 py-3.5">
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-                                        @if(str_contains($log->accion, 'crear')) bg-blue-50 text-blue-700
-                                        @elseif(str_contains($log->accion, 'completar')) bg-emerald-50 text-emerald-700
-                                        @elseif(str_contains($log->accion, 'reabrir')) bg-amber-50 text-amber-700
-                                        @elseif(str_contains($log->accion, 'eliminar')) bg-rose-50 text-rose-700
-                                        @else bg-slate-50 text-slate-600
-                                        @endif">
-                                        {{ $log->accion }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-3.5 text-slate-500">{{ $log->entidad_type }}</td>
-                                <td class="px-6 py-3.5 text-slate-500">{{ $log->entidad_id ?? '—' }}</td>
-                                <td class="px-6 py-3.5 text-slate-600 max-w-xs truncate" title="{{ $log->descripcion }}">{{ $log->descripcion }}</td>
-                                <td class="px-6 py-3.5 text-slate-400">{{ $log->ip_address ?? '—' }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="7" class="px-6 py-12 text-center text-sm text-slate-400">No hay registros de auditoría.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                    @empty
+                        <tr><td colspan="6" class="px-2 py-12 text-center text-sm text-slate-400">No hay registros de auditoría.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
             @if ($logs->hasPages())
-                <div class="px-6 py-4 border-t border-slate-100">
+                <div class="px-3 py-3 border-t border-slate-100">
                     {{ $logs->links() }}
                 </div>
             @endif

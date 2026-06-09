@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Equipo;
+use App\Models\FlujoEjecucion;
+use App\Models\FlujoPasoAsignacion;
 use App\Models\FlujoTrabajo;
 use App\Models\Notificacion;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class FlujoTrabajoController extends Controller
 {
-    // Listar todos los flujos con búsqueda opcional
     public function index(Request $request)
     {
         $query = FlujoTrabajo::query();
@@ -29,21 +32,25 @@ class FlujoTrabajoController extends Controller
         return view('flujos.index', compact('flujos'));
     }
 
-    // Mostrar formulario de creación
     public function create()
     {
-        return view('flujos.create');
+        $equipos = Auth::user()->role?->slug === 'super_admin'
+            ? Equipo::orderBy('nombre')->get()
+            : Equipo::orderBy('nombre')->get();
+
+        return view('flujos.create', compact('equipos'));
     }
 
-    // Guardar nuevo flujo
     public function store(Request $request)
     {
         $request->validate([
-            'nombre'       => 'required|string|max:255',
+            'nombre'       => 'required|string|max:255|unique:flujos_trabajo,nombre',
             'departamento' => 'required|string|max:255',
             'estado'       => 'required|in:Activo,Borrador,Completado,Pausado',
+            'equipo_id'    => 'nullable|exists:equipos,id',
         ], [
             'nombre.required'       => 'El nombre del flujo es obligatorio.',
+            'nombre.unique'         => 'Ya existe un flujo con ese nombre.',
             'departamento.required' => 'El departamento es obligatorio.',
             'estado.required'       => 'El estado es obligatorio.',
         ]);
@@ -53,6 +60,7 @@ class FlujoTrabajoController extends Controller
             'nombre'       => $request->nombre,
             'departamento' => $request->departamento,
             'estado'       => $request->estado,
+            'equipo_id'    => $request->equipo_id,
             'user_id'      => Auth::id(),
         ]);
 
@@ -63,47 +71,147 @@ class FlujoTrabajoController extends Controller
             'mensaje' => "Flujo '{$flujo->nombre}' creado con código {$flujo->codigo}",
             'icono' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>',
             'color' => 'text-amber-500',
-            'url' => route('flujos.index'),
+            'url' => route('flujos-trabajo.index'),
         ]);
 
-        return redirect()->route('flujos.index')
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'id' => $flujo->id, 'flujo' => $flujo]);
+        }
+
+        return redirect()->route('flujos-trabajo.index')
             ->with('success', 'Flujo de trabajo creado correctamente.');
     }
 
-    // Mostrar formulario de edición
     public function edit(FlujoTrabajo $flujo)
     {
-        return view('flujos.edit', compact('flujo'));
+        $equipos = Auth::user()->role?->slug === 'super_admin'
+            ? Equipo::orderBy('nombre')->get()
+            : Equipo::orderBy('nombre')->get();
+
+        return view('flujos.edit', compact('flujo', 'equipos'));
     }
 
-    // Actualizar flujo
     public function update(Request $request, FlujoTrabajo $flujo)
     {
         $request->validate([
-            'nombre'       => 'required|string|max:255',
+            'nombre'       => 'required|string|max:255|unique:flujos_trabajo,nombre,'.$flujo->id,
             'departamento' => 'required|string|max:255',
             'estado'       => 'required|in:Activo,Borrador,Completado,Pausado',
+            'equipo_id'    => 'nullable|exists:equipos,id',
         ]);
 
-        $flujo->update($request->only('nombre', 'departamento', 'estado'));
+        $flujo->update($request->only('nombre', 'departamento', 'estado', 'equipo_id'));
 
-        return redirect()->route('flujos.index')
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'id' => $flujo->id]);
+        }
+
+        return redirect()->route('flujos-trabajo.index')
             ->with('success', 'Flujo actualizado correctamente.');
     }
 
-    // Eliminar flujo
     public function destroy(FlujoTrabajo $flujo)
     {
+        $flujo->ejecuciones()->delete();
         $flujo->delete();
 
-        return redirect()->route('flujos.index')
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return redirect()->route('flujos-trabajo.index')
             ->with('success', 'Flujo eliminado correctamente.');
     }
 
-    // Mostrar vista de línea de tiempo con estados
-    public function showTimeline()
+    public function showTimeline(Request $request)
     {
-        $flujos = FlujoTrabajo::with('estados')->orderByDesc('id')->get();
-        return view('flujos', compact('flujos'));
+        $user = Auth::user();
+        $esSuperAdmin = $user->role?->slug === 'super_admin';
+        $verMios = $request->filled('ver') && $request->ver === 'mios';
+
+        $equipos = $esSuperAdmin
+            ? Equipo::orderBy('nombre')->get()
+            : $user->equipos()->orderBy('nombre')->get();
+
+        $query = FlujoTrabajo::with('estados', 'user', 'equipo');
+
+        if ($request->filled('equipo_id')) {
+            $query->where('equipo_id', $request->equipo_id);
+        }
+
+        if ($verMios) {
+            // "Mis Flujos": only flows where user has assigned ejecutores
+            $flujoRelIds = FlujoPasoAsignacion::whereHas('ejecutores', fn($q) => $q->where('user_id', $user->id))
+                ->pluck('flujo_ejecucion_id')
+                ->pipe(fn($ids) => FlujoEjecucion::whereIn('id', $ids)->pluck('flujo_trabajo_id'))
+                ->unique()
+                ->toArray();
+
+            $query->whereIn('id', $flujoRelIds);
+        } elseif (!$esSuperAdmin) {
+            // Non-super admin default: show team flows AND personal assigned flows
+            $equipoIds = $user->equipos()->pluck('equipos.id');
+            $query->where(function ($q) use ($equipoIds, $user) {
+                $q->whereIn('equipo_id', $equipoIds)
+                  ->orWhereHas('ejecuciones.pasos.ejecutores', fn($qq) => $qq->where('user_id', $user->id));
+            });
+        }
+
+        $flujos = $query->orderByDesc('id')->get();
+
+        $misPasosPendientes = FlujoPasoAsignacion::whereHas('ejecutores', function ($q) use ($user) {
+                $q->where('user_id', $user->id)->where('estado', 'pendiente');
+            })
+            ->whereIn('estado', ['pendiente', 'en_progreso'])
+            ->when($request->filled('equipo_id'), function ($q) use ($request) {
+                $q->whereHas('ejecucion.flujoTrabajo', fn($qq) => $qq->where('equipo_id', $request->equipo_id));
+            })
+            ->with(['ejecucion.flujoTrabajo', 'ejecutores' => fn($q) => $q->where('user_id', $user->id)])
+            ->get();
+
+        $pasoCounts = null;
+        if ($verMios) {
+            $flujoIds = $flujos->pluck('id');
+            $pasoCounts = FlujoPasoAsignacion::whereHas('ejecucion', fn($q) => $q->whereIn('flujo_trabajo_id', $flujoIds))
+                ->whereHas('ejecutores', fn($q) => $q->where('user_id', $user->id))
+                ->selectRaw('flujo_ejecucion_id, COUNT(*) as total, SUM(CASE WHEN estado = ? THEN 1 ELSE 0 END) as completados', ['completado'])
+                ->groupBy('flujo_ejecucion_id')
+                ->get()
+                ->keyBy('flujo_ejecucion_id');
+        }
+
+        $pasoUsuarios = null;
+        if (!$verMios && $flujos->isNotEmpty()) {
+            $userIds = collect();
+            foreach ($flujos as $flujo) {
+                $pasos = $flujo->pasos ?? [];
+                foreach ($pasos as $paso) {
+                    if (!empty($paso['asignacion_usuario_id'])) {
+                        $userIds->push((int) $paso['asignacion_usuario_id']);
+                    }
+                    if (!empty($paso['revisor_id'])) {
+                        $userIds->push((int) $paso['revisor_id']);
+                    }
+                    if (!empty($paso['asignados_ids'])) {
+                        foreach ($paso['asignados_ids'] as $aid) {
+                            $userIds->push((int) $aid);
+                        }
+                    }
+                }
+            }
+            $pasoUsuarios = $userIds->unique()->isNotEmpty()
+                ? User::whereIn('id', $userIds->unique())->get()->keyBy('id')
+                : collect();
+        }
+
+        $pendientesRevision = FlujoPasoAsignacion::where('revisor_id', $user->id)
+            ->where('revision_estado', 'en_revision')
+            ->when($request->filled('equipo_id'), function ($q) use ($request) {
+                $q->whereHas('ejecucion.flujoTrabajo', fn($qq) => $qq->where('equipo_id', $request->equipo_id));
+            })
+            ->with(['ejecucion.flujoTrabajo'])
+            ->get();
+
+        return view('flujos', compact('flujos', 'equipos', 'esSuperAdmin', 'misPasosPendientes', 'verMios', 'pasoCounts', 'pasoUsuarios', 'pendientesRevision'));
     }
 }

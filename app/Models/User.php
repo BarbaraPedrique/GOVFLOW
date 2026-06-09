@@ -17,6 +17,7 @@ class User extends Authenticatable
     const STATUS_PENDIENTE = 'pendiente';
     const STATUS_ACTIVO = 'activo';
     const STATUS_INACTIVO = 'inactivo';
+    const STATUS_SUSPENDIDO = 'suspendido';
 
     protected $fillable = [
         'name',
@@ -47,6 +48,11 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(UserSession::class);
     }
 
     public function flujosTrabajo()
@@ -84,6 +90,16 @@ class User extends Authenticatable
         return asset('storage/' . $this->foto) . '?v=' . ($this->updated_at?->timestamp ?? 0);
     }
 
+    public function tareas(): HasMany
+    {
+        return $this->hasMany(Tarea::class);
+    }
+
+    public function roleHistorial(): HasMany
+    {
+        return $this->hasMany(RoleHistorial::class)->latest('asignado_en');
+    }
+
     public function isAdmin(): bool
     {
         return $this->role?->slug === 'administrador';
@@ -117,10 +133,59 @@ class User extends Authenticatable
     public function statusLabel(): string
     {
         return match ($this->status) {
-            self::STATUS_ACTIVO    => 'Activo',
-            self::STATUS_INACTIVO  => 'Inactivo',
-            self::STATUS_PENDIENTE => 'Pendiente',
-            default                => ucfirst($this->status ?? ''),
+            self::STATUS_ACTIVO      => 'Activo',
+            self::STATUS_INACTIVO    => 'Inactivo',
+            self::STATUS_PENDIENTE   => 'Pendiente',
+            self::STATUS_SUSPENDIDO  => 'Suspendido',
+            default                  => ucfirst($this->status ?? ''),
+        };
+    }
+
+    public function calcularEstrellasMes(?int $year = null, ?int $month = null): float
+    {
+        $year = $year ?? now()->year;
+        $month = $month ?? now()->month;
+
+        $sessions = $this->sessions()
+            ->whereYear('logged_in_at', $year)
+            ->whereMonth('logged_in_at', $month)
+            ->with('breaks')
+            ->get();
+
+        if ($sessions->isEmpty()) return 0;
+
+        $totalWorkSeconds = 0;
+        $totalPenaltySeconds = 0;
+
+        foreach ($sessions as $session) {
+            $duration = $session->duration;
+            if ($duration === null) continue;
+            $totalWorkSeconds += $duration;
+
+            foreach ($session->breaks as $break) {
+                if ($break->break_end === null) continue;
+                $breakMinutes = $break->break_start->diffInMinutes($break->break_end);
+                if ($breakMinutes > 35) {
+                    $totalPenaltySeconds += ($breakMinutes - 35) * 60;
+                }
+            }
+        }
+
+        if ($totalWorkSeconds <= 0) return 0;
+
+        $efficiency = max(0, ($totalWorkSeconds - $totalPenaltySeconds) / $totalWorkSeconds);
+
+        return match (true) {
+            $efficiency >= 0.95 => 5.0,
+            $efficiency >= 0.90 => 4.5,
+            $efficiency >= 0.85 => 4.0,
+            $efficiency >= 0.80 => 3.5,
+            $efficiency >= 0.75 => 3.0,
+            $efficiency >= 0.70 => 2.5,
+            $efficiency >= 0.65 => 2.0,
+            $efficiency >= 0.60 => 1.5,
+            $efficiency >= 0.55 => 1.0,
+            default             => 0.5,
         };
     }
 }

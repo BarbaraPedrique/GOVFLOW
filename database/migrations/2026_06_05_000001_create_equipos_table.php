@@ -21,7 +21,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('equipo_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->enum('rol', ['lider_equipo', 'empleado'])->default('empleado');
+            $table->enum('rol', ['lider_equipo', 'empleado', 'administrador', 'gerente'])->default('empleado');
             $table->timestamps();
 
             $table->unique(['equipo_id', 'user_id']);

@@ -45,8 +45,23 @@ class Equipo extends Model
         return $this->miembros()->wherePivot('rol', 'empleado');
     }
 
+    public function administradores(): BelongsToMany
+    {
+        return $this->miembros()->wherePivot('rol', 'administrador');
+    }
+
+    public function gerentesEquipo(): BelongsToMany
+    {
+        return $this->miembros()->wherePivot('rol', 'gerente');
+    }
+
     public function tareas(): HasMany
     {
         return $this->hasMany(Tarea::class);
+    }
+
+    public function flujosTrabajo(): HasMany
+    {
+        return $this->hasMany(FlujoTrabajo::class);
     }
 }

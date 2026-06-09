@@ -20,6 +20,7 @@
                 <h2 class="text-slate-800 font-semibold text-lg">Mi Perfil</h2>
             </div>
             <div class="flex items-center gap-6">
+                @include('partials.break-buttons')
                 @include('partials.notification-bell')
                 <div class="relative" x-data="{ open: false }">
                     <div @click="open = !open" class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 rounded-xl transition-all">

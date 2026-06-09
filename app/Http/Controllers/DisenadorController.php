@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Equipo;
 use App\Models\FlujoTrabajo;
 use App\Models\LogAuditoria;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class DisenadorController extends Controller
@@ -20,23 +23,34 @@ class DisenadorController extends Controller
 
         $flujos = FlujoTrabajo::with('estados')->orderByDesc('id')->get();
 
-        return view('disenador', compact('flujos'));
+        $equipos = Equipo::with('miembros.role')->orderBy('nombre')->get();
+        $equiposData = $equipos->mapWithKeys(fn($e) => [$e->id => $e->miembros->map(fn($m) => [
+            'id' => $m->id,
+            'name' => $m->name,
+            'role_slug' => $m->role?->slug ?? '',
+            'role_display' => $m->role?->display_name ?? $m->role?->slug ?? '',
+            'pivot_rol' => $m->pivot?->rol ?? '',
+        ])]);
+
+        return view('disenador', compact('flujos', 'equipos', 'equiposData'));
     }
 
     public function guardarPasos(Request $request, FlujoTrabajo $flujo): JsonResponse
     {
         $data = $request->validate([
-            'pasos'  => 'sometimes|json',
-            'diseno' => 'sometimes|json',
+            'pasos'  => 'sometimes|array',
+            'diseno' => 'sometimes|array',
         ]);
 
         if (isset($data['pasos'])) {
-            $flujo->update(['pasos' => $data['pasos']]);
+            $flujo->pasos = $data['pasos'];
         }
 
         if (isset($data['diseno'])) {
-            $flujo->update(['diseno' => $data['diseno']]);
+            $flujo->diseno = $data['diseno'];
         }
+
+        $flujo->save();
 
         LogAuditoria::registrar(
             'disenar_flujo',
@@ -52,8 +66,8 @@ class DisenadorController extends Controller
     public function obtenerPasos(FlujoTrabajo $flujo): JsonResponse
     {
         return response()->json([
-            'pasos'  => json_decode($flujo->pasos ?? '[]'),
-            'diseno' => json_decode($flujo->diseno ?? '{}'),
+            'pasos'  => $flujo->pasos ?? [],
+            'diseno' => $flujo->diseno ?? (object)[],
         ]);
     }
 }

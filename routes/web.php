@@ -10,6 +10,7 @@ use App\Http\Controllers\FlujoTrabajoController;
 use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\LogAuditoriaController;
 use App\Http\Controllers\NotificacionController;
+use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SolicitudClienteController;
 use App\Http\Controllers\TareaController;
@@ -22,7 +23,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/registro', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/registro', [RegisterController::class, 'register'])->name('register.store');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'suspended'])->group(function () {
     Route::get('/inicio', [DashboardController::class, 'index'])->name('inicio');
 
     Route::get('/perfil', [ProfileController::class, 'show'])->name('perfil');
@@ -54,12 +55,26 @@ Route::middleware('auth')->group(function () {
     Route::post('/notificaciones/{notificacion}/leido', [NotificacionController::class, 'marcarLeido'])->name('notificaciones.leido');
     Route::post('/notificaciones/marcar-todas', [NotificacionController::class, 'marcarTodasLeido'])->name('notificaciones.marcar-todas');
 
+    Route::get('/personal', [PersonalController::class, 'index'])->name('personal.index');
+    Route::get('/personal/{user}/detalle', [PersonalController::class, 'detalle'])->name('personal.detalle');
+    Route::post('/personal/{user}/rol', [PersonalController::class, 'cambiarRol'])->name('personal.rol');
+    Route::post('/personal/{user}/equipo', [PersonalController::class, 'cambiarEquipo'])->name('personal.equipo');
+    Route::post('/personal/{user}/suspender', [PersonalController::class, 'toggleSuspender'])->name('personal.suspender');
+    Route::delete('/personal/{user}', [PersonalController::class, 'eliminar'])->name('personal.eliminar');
+
     Route::get('/logs-auditoria', [LogAuditoriaController::class, 'index'])->name('logs.auditoria');
 
     Route::get('/disenador', [DisenadorController::class, 'index'])->name('disenador');
     Route::put('/disenador/{flujo}/pasos', [DisenadorController::class, 'guardarPasos'])->name('disenador.guardar');
     Route::get('/disenador/{flujo}/pasos', [DisenadorController::class, 'obtenerPasos'])->name('disenador.pasos');
 
+    Route::post('/flujos/paso/{pasoAsignacion}/completar', [\App\Http\Controllers\FlujoEjecucionController::class, 'completarPaso'])->name('flujos.paso.completar');
+    Route::post('/flujos/paso/{pasoAsignacion}/revisar', [\App\Http\Controllers\FlujoEjecucionController::class, 'revisarPaso'])->name('flujos.paso.revisar');
+    Route::get('/flujos/mis-pendientes', [\App\Http\Controllers\FlujoEjecucionController::class, 'misPendientes'])->name('flujos.mis-pendientes');
+    Route::post('/flujos/{flujo}/iniciar', [\App\Http\Controllers\FlujoEjecucionController::class, 'iniciar'])->name('flujos.iniciar');
+    Route::post('/break/start', [\App\Http\Controllers\BreakController::class, 'start'])->name('break.start');
+    Route::post('/break/end', [\App\Http\Controllers\BreakController::class, 'end'])->name('break.end');
+    Route::get('/break/status', [\App\Http\Controllers\BreakController::class, 'status'])->name('break.status');
     Route::resource('equipos', EquipoController::class)->except(['show']);
 
     Route::prefix('admin')->middleware('auth')->group(function () {

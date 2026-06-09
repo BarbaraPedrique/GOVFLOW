@@ -17,6 +17,7 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-10 fixed right-0 left-64 top-0 z-30">
         <div><h2 class="text-slate-800 font-semibold text-lg">Solicitudes</h2></div>
         <div class="flex items-center gap-6">
+            @include('partials.break-buttons')
             <div class="relative" x-data="{ openNotis: false, noLeidas: 0, notis: [] }"
                  x-init="fetch('{{ route('notificaciones.index') }}?ajax=1').then(r=>r.json()).then(d=>{ noLeidas=d.noLeidas; notis=d.notificaciones })">
                 <button @click="openNotis = !openNotis; if(openNotis){fetch('{{ route('notificaciones.index') }}?ajax=1').then(r=>r.json()).then(d=>{noLeidas=d.noLeidas;notis=d.notificaciones})}" class="relative text-slate-400 hover:text-slate-600 transition-colors">
@@ -83,6 +84,41 @@
             <div class="bg-red-50 border border-red-200 text-red-700 px-5 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
                 <svg class="h-5 w-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 {{ session('error') }}
+            </div>
+        @endif
+
+        @if(isset($revisionesFlujo) && $revisionesFlujo->count() > 0)
+            <div class="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden mb-6">
+                <div class="px-6 py-4 border-b border-amber-100 bg-amber-50/30">
+                    <h3 class="text-sm font-bold text-amber-700">Revisiones de flujo pendientes</h3>
+                    <p class="text-xs text-amber-500 mt-0.5">Tienes {{ $revisionesFlujo->count() }} paso(s) pendiente(s) de revisión</p>
+                </div>
+                <div class="divide-y divide-slate-100">
+                    @foreach ($revisionesFlujo as $rev)
+                        <div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-slate-700">{{ $rev->paso_nombre }}</p>
+                                <p class="text-xs text-slate-500">Flujo: {{ $rev->ejecucion?->flujoTrabajo?->nombre ?? '—' }}</p>
+                                @if ($rev->mensaje)
+                                    <p class="text-xs text-slate-400 mt-0.5 italic">"{{ $rev->mensaje }}"</p>
+                                @endif
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0 ml-4">
+                                <form action="{{ route('flujos.paso.revisar', $rev) }}" method="POST" class="inline" onsubmit="event.preventDefault(); fetch(this.action,{method:'POST',headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({accion:'aprobar',comentario:''})}).then(r=>r.json()).then(d=>{if(d.success)location.reload();else alert(d.message)});">
+                                    @csrf
+                                    <input type="hidden" name="accion" value="aprobar">
+                                    <button type="submit" class="px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">Aprobar</button>
+                                </form>
+                                <form action="{{ route('flujos.paso.revisar', $rev) }}" method="POST" class="inline" onsubmit="event.preventDefault(); const c=this.querySelector('[name=comentario]').value; fetch(this.action,{method:'POST',headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({accion:'rechazar',comentario:c})}).then(r=>r.json()).then(d=>{if(d.success)location.reload();else alert(d.message)});">
+                                    @csrf
+                                    <input type="hidden" name="accion" value="rechazar">
+                                    <input type="text" name="comentario" placeholder="Motivo..." class="w-28 text-xs rounded-lg border border-slate-200 px-2 py-1">
+                                    <button type="submit" class="px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 rounded-lg hover:bg-rose-100 transition-colors">Rechazar</button>
+                                </form>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         @endif
 

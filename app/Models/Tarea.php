@@ -21,6 +21,7 @@ class Tarea extends Model
         'hora_fin',
         'receso',
         'completada',
+        'completed_at',
         'status',
         'orden',
     ];
@@ -29,6 +30,7 @@ class Tarea extends Model
     {
         return [
             'completada' => 'boolean',
+            'completed_at' => 'datetime',
             'fecha_vencimiento' => 'date',
             'orden' => 'integer',
         ];
