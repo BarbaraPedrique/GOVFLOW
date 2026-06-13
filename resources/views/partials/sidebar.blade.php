@@ -44,16 +44,10 @@
                 Logs Auditoría
             </a>
         @endif
-        @if(Auth::user()->role?->slug === 'super_admin')
-            <a href="{{ route('admin.solicitudes') }}" class="{{ $linkClass($active('admin.solicitudes')) }}">
-                <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-                Registros Pendientes
-            </a>
-        @endif
         @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador', 'gerente', 'lider_equipo']))
-            <a href="{{ route('solicitudes.mis') }}" class="{{ $linkClass($active('solicitudes.mis')) }}">
+            <a href="{{ route('solicitudes.mis') }}" class="{{ $linkClass($active(['solicitudes.mis', 'admin.solicitudes'])) }}">
                 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Solicitudes
+                Solicitudes y Registros
             </a>
         @endif
         @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador']))
@@ -64,3 +58,4 @@
         @endif
     </nav>
 </aside>
+@include('partials.notas-modal')

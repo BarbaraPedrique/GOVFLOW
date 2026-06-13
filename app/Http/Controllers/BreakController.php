@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SessionBreak;
 use App\Models\UserSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,9 +12,9 @@ class BreakController extends Controller
 {
     private function obtenerSesion(): ?UserSession
     {
-        $session = UserSession::where('user_id', Auth::id())->whereNull('logged_out_at')->latest()->first();
+        $session = UserSession::query()->where('user_id', Auth::id())->whereNull('logged_out_at')->latest()->first();
         if (!$session) {
-            $session = UserSession::create(['user_id' => Auth::id(), 'logged_in_at' => now()]);
+            $session = UserSession::query()->create(['user_id' => Auth::id(), 'logged_in_at' => now()]);
         }
         return $session;
     }
@@ -46,6 +47,7 @@ class BreakController extends Controller
             return response()->json(['success' => false, 'message' => 'No tienes un descanso activo.'], 400);
         }
 
+        /** @var \App\Models\SessionBreak $break */
         $break->update(['break_end' => now()]);
 
         return response()->json(['success' => true, 'message' => 'Descanso culminado.']);

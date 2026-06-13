@@ -70,17 +70,18 @@
 
                 <div class="space-y-6">
                     @php
-                        $adminEquipoIds = old('admin_equipo', $equipo?->miembros->where('pivot.rol', 'administrador')->pluck('id')->toArray() ?? []);
-                        $gerentesEquipoIds = old('gerentes_equipo', $equipo?->miembros->where('pivot.rol', 'gerente')->pluck('id')->toArray() ?? []);
-                        $lideresIds = old('lideres', $equipo?->miembros->where('pivot.rol', 'lider_equipo')->pluck('id')->toArray() ?? []);
-                        $empIds = old('empleados', $equipo?->miembros->where('pivot.rol', 'empleado')->pluck('id')->toArray() ?? []);
+                        $miembrosEquipo = $equipo ? $equipo->miembros : collect();
+                        $adminEquipoIds = old('admin_equipo', $miembrosEquipo->where('pivot.rol', 'administrador')->pluck('id')->toArray());
+                        $gerentesEquipoIds = old('gerentes_equipo', $miembrosEquipo->where('pivot.rol', 'gerente')->pluck('id')->toArray());
+                        $lideresIds = old('lideres', $miembrosEquipo->where('pivot.rol', 'lider_equipo')->pluck('id')->toArray());
+                        $empIds = old('empleados', $miembrosEquipo->where('pivot.rol', 'empleado')->pluck('id')->toArray());
                     @endphp
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Administradores del Equipo</label>
                         <p class="text-[11px] text-slate-400 mb-2">Pueden revisar y aprobar pasos de flujos del equipo.</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-slate-50 rounded-xl p-4 border border-slate-200">
-                            @foreach($todos as $user)
+                            @foreach($admins as $user)
                                 <label class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white transition-colors cursor-pointer">
                                     <input type="checkbox" name="admin_equipo[]" value="{{ $user->id }}" {{ in_array($user->id, $adminEquipoIds) ? 'checked' : '' }}
                                            class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
@@ -97,7 +98,7 @@
                         <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Gerentes del Equipo</label>
                         <p class="text-[11px] text-slate-400 mb-2">Pueden iniciar flujos y revisar pasos del equipo.</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-slate-50 rounded-xl p-4 border border-slate-200">
-                            @foreach($todos as $user)
+                            @foreach($gerentesEquipo as $user)
                                 <label class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white transition-colors cursor-pointer">
                                     <input type="checkbox" name="gerentes_equipo[]" value="{{ $user->id }}" {{ in_array($user->id, $gerentesEquipoIds) ? 'checked' : '' }}
                                            class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
@@ -113,7 +114,7 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Líderes de Equipo</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-slate-50 rounded-xl p-4 border border-slate-200">
-                            @foreach($todos as $user)
+                            @foreach($lideres as $user)
                                 <label class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white transition-colors cursor-pointer">
                                     <input type="checkbox" name="lideres[]" value="{{ $user->id }}" {{ in_array($user->id, $lideresIds) ? 'checked' : '' }}
                                            class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
@@ -129,7 +130,7 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Empleados</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-slate-50 rounded-xl p-4 border border-slate-200">
-                            @foreach($todos as $user)
+                            @foreach($empleados as $user)
                                 <label class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white transition-colors cursor-pointer">
                                     <input type="checkbox" name="empleados[]" value="{{ $user->id }}" {{ in_array($user->id, $empIds) ? 'checked' : '' }}
                                            class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">

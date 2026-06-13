@@ -19,13 +19,7 @@ class AdminSolicitudController extends Controller
 
     public function index()
     {
-        $this->autorizarSuperAdmin();
-
-        $solicitudes = User::where('status', User::STATUS_PENDIENTE)
-            ->orderByDesc('created_at')
-            ->get();
-
-        return view('admin.solicitudes', compact('solicitudes'));
+        return redirect()->route('solicitudes.mis');
     }
 
     public function aprobar(User $user)
@@ -40,7 +34,7 @@ class AdminSolicitudController extends Controller
         DB::transaction(function () use ($user) {
             $user->update(['status' => User::STATUS_ACTIVO]);
 
-            Tarea::where('categoria', 'Solicitud')
+            Tarea::query()->where('categoria', 'Solicitud')
                 ->where('descripcion', 'like', "%user_id:{$user->id}%")
                 ->update(['completada' => true, 'status' => 'aprobado']);
 
@@ -71,13 +65,17 @@ class AdminSolicitudController extends Controller
 
         $nombre = $user->name;
 
-        DB::transaction(function () use ($user) {
-            Tarea::where('categoria', 'Solicitud')
+        DB::beginTransaction();
+        try {
+            Tarea::query()->where('categoria', 'Solicitud')
                 ->where('descripcion', 'like', "%user_id:{$user->id}%")
                 ->update(['completada' => true, 'status' => 'rechazado']);
-
-            $user->delete();
-        });
+            User::destroy($user->id);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
 
         return redirect()->route('admin.solicitudes')
             ->with('status', "Solicitud de {$nombre} rechazada y eliminada.");
@@ -93,7 +91,7 @@ class AdminSolicitudController extends Controller
             return response()->json(['success' => false, 'error' => 'No se pudo identificar el usuario.']);
         }
 
-        $user = User::find($userId);
+        $user = User::query()->find($userId);
 
         if (!$user || $user->status !== User::STATUS_PENDIENTE) {
             return response()->json(['success' => false, 'error' => 'Usuario no encontrado o ya procesado.']);
@@ -128,7 +126,7 @@ class AdminSolicitudController extends Controller
             return response()->json(['success' => false, 'error' => 'No se pudo identificar el usuario.']);
         }
 
-        $user = User::find($userId);
+        $user = User::query()->find($userId);
 
         if (!$user || $user->status !== User::STATUS_PENDIENTE) {
             return response()->json(['success' => false, 'error' => 'Usuario no encontrado o ya procesado.']);
@@ -136,10 +134,15 @@ class AdminSolicitudController extends Controller
 
         $nombre = $user->name;
 
-        DB::transaction(function () use ($user, $tarea) {
+        DB::beginTransaction();
+        try {
             $tarea->update(['completada' => true, 'status' => 'rechazado']);
-            $user->delete();
-        });
+            User::destroy($user->id);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
 
         return response()->json(['success' => true, 'message' => "Solicitud de {$nombre} rechazada."]);
     }

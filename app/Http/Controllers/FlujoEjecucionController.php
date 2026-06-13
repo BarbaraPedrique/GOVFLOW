@@ -18,7 +18,6 @@ class FlujoEjecucionController extends Controller
     {
         $flujo = FlujoTrabajo::findOrFail($flujoId);
 
-        // Only super_admin, administrador, and gerente can start flows
         $roleSlug = Auth::user()->role?->slug;
         if (!in_array($roleSlug, ['super_admin', 'administrador', 'gerente'])) {
             if (request()->wantsJson()) {
@@ -27,7 +26,6 @@ class FlujoEjecucionController extends Controller
             return back()->with('error', 'No tienes permiso para iniciar flujos.');
         }
 
-        // Prevent duplicate ejecuciones
         if (FlujoEjecucion::where('flujo_trabajo_id', $flujo->id)
             ->whereIn('estado', ['en_progreso', 'completada'])
             ->exists()) {
@@ -45,7 +43,6 @@ class FlujoEjecucionController extends Controller
             return back()->with('error', 'El flujo no tiene pasos definidos.');
         }
 
-        // Validate every step has a revisor
         foreach ($pasos as $i => $paso) {
             if (empty($paso['revisor_id'])) {
                 $errMsg = "El paso " . ($i + 1) . " ('{$paso['nombre']}') no tiene un revisor asignado. Todos los pasos requieren un revisor.";
@@ -56,17 +53,14 @@ class FlujoEjecucionController extends Controller
             }
         }
 
-        // Validate last step reviewer is a team admin/gerente or global admin+
         $ultimoPaso = !empty($pasos) ? $pasos[count($pasos) - 1] : null;
         if ($ultimoPaso && !empty($ultimoPaso['revisor_id'])) {
             $ultimoRevisorId = (int) $ultimoPaso['revisor_id'];
             $revisor = User::with('role')->find($ultimoRevisorId);
             $revisorRole = $revisor?->role?->slug;
 
-            // Global admin+ can always review last step
             $esAdminGlobal = in_array($revisorRole, ['super_admin', 'administrador']);
 
-            // Check team-level roles
             $esAdminEquipo = false;
             if ($flujo->equipo_id && $revisor) {
                 $pivotRol = \DB::table('equipo_user')
@@ -99,7 +93,6 @@ class FlujoEjecucionController extends Controller
                 $fechaLimite = now()->addHours((int) $paso['fecha_limite_horas']);
             }
 
-            // Determine assignees
             $asignadosIds = $paso['asignados_ids'] ?? [];
             if (empty($asignadosIds) && !empty($paso['asignacion_usuario_id'])) {
                 $asignadosIds = [(int) $paso['asignacion_usuario_id']];
@@ -125,7 +118,6 @@ class FlujoEjecucionController extends Controller
                 'fecha_limite' => $fechaLimite,
             ]);
 
-            // Create ejecutores for each assignee
             foreach ($asignadosIds as $uid) {
                 FlujoPasoEjecutor::create([
                     'flujo_paso_asignacion_id' => $pasoAsignacion->id,
@@ -134,7 +126,20 @@ class FlujoEjecucionController extends Controller
                 ]);
             }
 
-            // Notify first step assignees
+            if ($i === 0) {
+                foreach ($asignadosIds as $uid) {
+                    Tarea::create([
+                        'user_id' => $uid,
+                        'titulo' => $paso['nombre'] ?? 'Paso ' . ($i + 1),
+                        'descripcion' => "Paso del flujo '{$flujo->nombre}' ({$flujo->codigo}): " . ($paso['descripcion'] ?? ''),
+                        'prioridad' => $paso['prioridad'] ?? 'media',
+                        'categoria' => 'Flujo',
+                    ]);
+                }
+
+                $this->crearTareasChecklist($paso, $pasoAsignacion, $flujo, $asignadosIds);
+            }
+
             if ($i === 0 && !empty($asignadosIds)) {
                 $tiempo = $paso['fecha_limite_horas'] ?? '—';
                 foreach ($asignadosIds as $uid) {
@@ -161,7 +166,6 @@ class FlujoEjecucionController extends Controller
     {
         $user = Auth::user();
 
-        // Find the ejecutor record for this user
         $ejecutor = FlujoPasoEjecutor::where('flujo_paso_asignacion_id', $pasoAsignacion->id)
             ->where('user_id', $user->id)
             ->first();
@@ -175,6 +179,23 @@ class FlujoEjecucionController extends Controller
         }
 
         $pasoInfo = ($pasoAsignacion->ejecucion->flujoTrabajo->pasos ?? [])[$pasoAsignacion->paso_index] ?? [];
+        $checklist = $pasoInfo['checklist'] ?? [];
+        $userId = $ejecutor ? $ejecutor->user_id : $user->id;
+
+        // Check that all checklist Tareas are completed before allowing paso completion
+        if (!empty($checklist)) {
+            $checklistIds = collect($checklist)->pluck('item')->filter()->values();
+            if ($checklistIds->isNotEmpty()) {
+                $checklistTareasCompletadas = Tarea::where('user_id', $userId)
+                    ->where('categoria', 'Flujo')
+                    ->whereIn('titulo', $checklistIds)
+                    ->where('completada', true)
+                    ->count();
+                if ($checklistTareasCompletadas < $checklistIds->count()) {
+                    return response()->json(['success' => false, 'message' => 'Completa todos los pasos internos desde la página de Tareas antes de marcar el paso como completado.'], 400);
+                }
+            }
+        }
 
         $archivoPath = null;
         if ($request->hasFile('archivo')) {
@@ -189,37 +210,26 @@ class FlujoEjecucionController extends Controller
                 'mensaje' => $request->mensaje,
             ]);
 
-            // Create Tareas from checklist items for this ejecutor
-            $checklist = $pasoInfo['checklist'] ?? [];
-            foreach ($checklist as $item) {
-                if (!empty($item['item'])) {
-                    Tarea::create([
-                        'user_id' => $ejecutor->user_id,
-                        'titulo' => $item['item'],
-                        'descripcion' => "Checklist del paso '{$pasoAsignacion->paso_nombre}' en flujo '{$pasoAsignacion->ejecucion->flujoTrabajo->nombre}'",
-                        'prioridad' => $pasoInfo['prioridad'] ?? 'media',
-                        'categoria' => 'Flujo',
-                        'status' => 'pendiente',
-                    ]);
-                }
-            }
+            Tarea::where('user_id', $ejecutor->user_id)
+                ->where('categoria', 'Flujo')
+                ->where('titulo', $pasoAsignacion->paso_nombre)
+                ->where('completada', false)
+                ->latest()
+                ->first()
+                ?->update(['completada' => true, 'completed_at' => now()]);
         }
 
-        // Also update the main asignacion record for backward compat
         $pasoAsignacion->update([
             'archivo' => $archivoPath ?: $pasoAsignacion->archivo,
             'mensaje' => $request->mensaje ?? $pasoAsignacion->mensaje,
         ]);
 
-        // Check if all ejecutores for this step are completed
         if ($pasoAsignacion->todosEjecutoresCompletados()) {
-            // Move to revision
             $pasoAsignacion->update([
                 'estado' => 'en_progreso',
                 'revision_estado' => 'en_revision',
             ]);
 
-            // Notify the reviewer that the paso is ready for review
             if ($pasoAsignacion->revisor_id) {
                 Notificacion::create([
                     'user_id' => $pasoAsignacion->revisor_id,
@@ -262,13 +272,28 @@ class FlujoEjecucionController extends Controller
         if ($accion === 'aprobar') {
             $this->aprobarPaso($pasoAsignacion);
         } else {
-            // Rechazado: reset ejecutores to pendiente
             FlujoPasoEjecutor::where('flujo_paso_asignacion_id', $pasoAsignacion->id)
                 ->update(['estado' => 'pendiente', 'completado_en' => null]);
 
-            // Notify assignees
             $ejecutores = FlujoPasoEjecutor::where('flujo_paso_asignacion_id', $pasoAsignacion->id)->get();
             foreach ($ejecutores as $ejec) {
+                Tarea::where('user_id', $ejec->user_id)
+                    ->where('categoria', 'Flujo')
+                    ->where('titulo', $pasoAsignacion->paso_nombre)
+                    ->latest()
+                    ->first()
+                    ?->update(['completada' => false, 'completed_at' => null]);
+
+                $pasoInfo = ($pasoAsignacion->ejecucion->flujoTrabajo->pasos ?? [])[$pasoAsignacion->paso_index] ?? [];
+                $checklist = $pasoInfo['checklist'] ?? [];
+                $checklistIds = collect($checklist)->pluck('item')->filter()->values();
+                if ($checklistIds->isNotEmpty()) {
+                    Tarea::where('user_id', $ejec->user_id)
+                        ->where('categoria', 'Flujo')
+                        ->whereIn('titulo', $checklistIds)
+                        ->update(['completada' => false, 'completed_at' => null]);
+                }
+
                 Notificacion::create([
                     'user_id' => $ejec->user_id,
                     'tipo' => 'flujo_rechazado',
@@ -316,11 +341,9 @@ class FlujoEjecucionController extends Controller
             return;
         }
 
-        // Move to next step
         $siguienteIndex = $pasoAsignacion->paso_index + 1;
         $ejecucion->update(['paso_actual_index' => $siguienteIndex]);
 
-        // Mark next paso as en_progreso and its ejecutores
         $siguientePaso = FlujoPasoAsignacion::where('flujo_ejecucion_id', $ejecucion->id)
             ->where('paso_index', $siguienteIndex)->first();
 
@@ -330,6 +353,21 @@ class FlujoEjecucionController extends Controller
 
             FlujoPasoEjecutor::where('flujo_paso_asignacion_id', $siguientePaso->id)
                 ->update(['estado' => 'pendiente']);
+
+            $siguientesEjecutores = FlujoPasoEjecutor::where('flujo_paso_asignacion_id', $siguientePaso->id)->get();
+            $siguienteIds = $siguientesEjecutores->pluck('user_id')->toArray();
+
+            foreach ($siguientesEjecutores as $ejec) {
+                Tarea::create([
+                    'user_id' => $ejec->user_id,
+                    'titulo' => $siguientePaso->paso_nombre,
+                    'descripcion' => "Paso del flujo '{$flujo->nombre}' ({$flujo->codigo}): " . ($siguienteInfo['descripcion'] ?? ''),
+                    'prioridad' => $siguienteInfo['prioridad'] ?? 'media',
+                    'categoria' => 'Flujo',
+                ]);
+            }
+
+            $this->crearTareasChecklist($siguienteInfo, $siguientePaso, $flujo, $siguienteIds);
 
             $ejecutores = FlujoPasoEjecutor::where('flujo_paso_asignacion_id', $siguientePaso->id)->get();
             foreach ($ejecutores as $ejec) {
@@ -360,11 +398,28 @@ class FlujoEjecucionController extends Controller
         }
     }
 
+    private function crearTareasChecklist(array $pasoInfo, FlujoPasoAsignacion $pasoAsignacion, $flujo, array $userIds): void
+    {
+        $checklist = $pasoInfo['checklist'] ?? [];
+        foreach ($checklist as $item) {
+            if (!empty($item['item'])) {
+                foreach ($userIds as $uid) {
+                    Tarea::create([
+                        'user_id' => $uid,
+                        'titulo' => $item['item'],
+                        'descripcion' => "Checklist del paso '{$pasoAsignacion->paso_nombre}' en flujo '{$flujo->nombre}'",
+                        'prioridad' => $pasoInfo['prioridad'] ?? 'media',
+                        'categoria' => 'Flujo',
+                    ]);
+                }
+            }
+        }
+    }
+
     public function misPendientes()
     {
         $userId = Auth::id();
 
-        // Steps where user is an ejecutor (assigned)
         $pasosPendientes = FlujoPasoAsignacion::whereHas('ejecutores', function ($q) use ($userId) {
             $q->where('user_id', $userId)->where('estado', 'pendiente');
         })
@@ -377,7 +432,6 @@ class FlujoEjecucionController extends Controller
             return $paso;
         });
 
-        // Steps where user is reviewer and needs to review
         $pasosPendientesRevision = FlujoPasoAsignacion::where('revisor_id', $userId)
             ->where('revision_estado', 'en_revision')
             ->with(['ejecucion.flujoTrabajo'])

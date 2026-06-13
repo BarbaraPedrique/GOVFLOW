@@ -22,7 +22,7 @@ class RegisterController extends Controller
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email',
-            'role'     => 'required|in:gerente,administrador,empleado',
+            'role'     => 'required|in:gerente,administrador,lider_equipo,empleado',
             'password' => 'required|min:8|confirmed',
         ], [
             'name.required'       => 'El nombre es obligatorio.',

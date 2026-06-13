@@ -115,6 +115,7 @@
                                 <select name="rol_solicitado" class="w-full px-4 py-2.5 appearance-none rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] focus:ring-2 focus:ring-blue-50 text-slate-800 text-sm font-medium bg-white transition-all">
                                     <option value="administrador" @selected($user->role?->slug === 'administrador')>{{ $user->role?->slug === 'administrador' ? 'Administrador (Actual)' : 'Administrador' }}</option>
                                     <option value="gerente" @selected($user->role?->slug === 'gerente')>{{ $user->role?->slug === 'gerente' ? 'Gerente (Actual)' : 'Gerente' }}</option>
+                                    <option value="lider_equipo" @selected($user->role?->slug === 'lider_equipo')>{{ $user->role?->slug === 'lider_equipo' ? 'Líder de Equipo (Actual)' : 'Líder de Equipo' }}</option>
                                     <option value="empleado" @selected($user->role?->slug === 'empleado')>{{ $user->role?->slug === 'empleado' ? 'Empleado (Actual)' : 'Empleado' }}</option>
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">

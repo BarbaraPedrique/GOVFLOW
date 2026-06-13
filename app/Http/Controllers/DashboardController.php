@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FlujoEjecucion;
+use App\Models\FlujoPasoAsignacion;
+use App\Models\FlujoPasoEjecutor;
 use App\Models\FlujoTrabajo;
 use App\Models\Tarea;
 use App\Models\UserSession;
@@ -13,6 +16,7 @@ class DashboardController extends Controller
     private function formatearSegundos(?int $segundos): string
     {
         if (!$segundos) return '—';
+        $segundos = abs($segundos);
         $h = intdiv($segundos, 3600);
         $m = intdiv($segundos % 3600, 60);
         $s = $segundos % 60;
@@ -23,17 +27,41 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $misFlujos = FlujoTrabajo::where('user_id', $user->id)->count();
+        // Count flows where user is participant (creator, executor, or reviewer)
+        $pasoIds = FlujoPasoEjecutor::query()->where('user_id', $user->id)
+            ->pluck('flujo_paso_asignacion_id');
+        $flujoIdsComoRevisor = FlujoPasoAsignacion::query()->where('revisor_id', $user->id)
+            ->pluck('flujo_ejecucion_id');
+        $pasoIdsArr = $pasoIds->toArray();
+        $flujoIdsComoEjecutor = FlujoPasoAsignacion::query()->whereIn('id', $pasoIdsArr)
+            ->pluck('flujo_ejecucion_id');
 
-        $usuariosActivos = UserSession::whereNull('logged_out_at')
-            ->where('logged_in_at', '>=', now()->subHours(24))
-            ->distinct('user_id')
+        $allIdsArr = $flujoIdsComoEjecutor->merge($flujoIdsComoRevisor)->toArray();
+        $flujoEjecucionQuery = FlujoEjecucion::query();
+        $flujoEjecucionQuery->whereIn('id', $allIdsArr);
+        $flujosTrabajoQuery = FlujoTrabajo::query()->where('user_id', $user->id)
+            ->orWhereIn('id', $flujoEjecucionQuery->pluck('flujo_trabajo_id'));
+        $misFlujos = $flujosTrabajoQuery->count();
+
+        $sessionQuery = UserSession::query()->whereNull('logged_out_at');
+        $usuariosActivos = $sessionQuery->where('logged_in_at', '>=', now()->subHours(24))
+            ->distinct()
             ->count('user_id');
 
-        $tareasPendientes = Tarea::where('user_id', $user->id)->where('completada', false)->count();
+        $tareasPersonales = Tarea::query()->where('user_id', $user->id)
+            ->where('completada', false)
+            ->whereNull('completed_at')
+            ->whereNotIn('categoria', ['Flujo', 'Solicitud'])
+            ->count();
 
-        $sesionActual = UserSession::where('user_id', $user->id)->whereNull('logged_out_at')->latest()->first();
-        $sesionAnterior = UserSession::where('user_id', $user->id)->whereNotNull('logged_out_at')->latest()->first();
+        $tareasFlujo = Tarea::query()->where('user_id', $user->id)
+            ->where('completada', false)
+            ->whereNull('completed_at')
+            ->where('categoria', 'Flujo')
+            ->count();
+
+        $sesionActual = UserSession::query()->where('user_id', $user->id)->whereNull('logged_out_at')->latest()->first();
+        $sesionAnterior = UserSession::query()->where('user_id', $user->id)->whereNotNull('logged_out_at')->latest()->first();
 
         $tiempoActivo = $sesionActual
             ? $this->formatearSegundos($sesionActual->logged_in_at->diffInSeconds(now()) - $sesionActual->activeBreakSeconds)
@@ -52,7 +80,8 @@ class DashboardController extends Controller
         return view('inicio', compact(
             'misFlujos',
             'usuariosActivos',
-            'tareasPendientes',
+            'tareasPersonales',
+            'tareasFlujo',
             'tiempoActivo',
             'ultimaDuracion',
             'ultimoDescanso',

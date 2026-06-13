@@ -27,7 +27,7 @@ class TareaController extends Controller
         };
 
         if (in_array($user->role?->slug, ['super_admin', 'administrador'])) {
-            $tareas = Tarea::where($baseQuery)->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
+            $tareas = Tarea::where('user_id', $user->id)->where($baseQuery)->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
             $equipos = Equipo::orderBy('nombre')->get();
         } elseif ($user->role?->slug === 'gerente') {
             $equipoIds = $user->equiposDirigidos()->pluck('id');
@@ -97,24 +97,6 @@ class TareaController extends Controller
             'url' => route('tareas.index'),
         ]);
 
-        if ($tarea->fecha_vencimiento && $tarea->categoria !== 'Horario') {
-            $diaSemana = (int) $tarea->fecha_vencimiento->format('N') - 1;
-            $exists = Horario::where('user_id', auth()->id())
-                ->where('dia_semana', $diaSemana)
-                ->where('titulo', $tarea->titulo)
-                ->exists();
-
-            if (!$exists) {
-                Horario::create([
-                    'user_id' => auth()->id(),
-                    'dia_semana' => $diaSemana,
-                    'hora_inicio' => '08:00',
-                    'hora_fin' => '09:00',
-                    'titulo' => $tarea->titulo,
-                ]);
-            }
-        }
-
         LogAuditoria::registrar(
             'crear_tarea',
             'Tarea',
@@ -179,15 +161,7 @@ class TareaController extends Controller
         $user = auth()->user();
         if ($tarea->user_id !== $user->id && !in_array($user->role?->slug, ['super_admin', 'administrador'])) abort(403);
 
-        if ($tarea->fecha_vencimiento && $tarea->categoria !== 'Horario') {
-            $diaSemana = (int) $tarea->fecha_vencimiento->format('N') - 1;
-            Horario::where('user_id', auth()->id())
-                ->where('dia_semana', $diaSemana)
-                ->where('titulo', $tarea->titulo)
-                ->delete();
-        }
-
-        $tarea->delete();
+        Tarea::destroy($tarea->id);
         return response()->json(['success' => true]);
     }
 

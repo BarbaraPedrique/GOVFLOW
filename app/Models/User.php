@@ -152,7 +152,29 @@ class User extends Authenticatable
             ->with('breaks')
             ->get();
 
-        if ($sessions->isEmpty()) return 0;
+        if ($sessions->isEmpty()) {
+            $totalTareas = $this->tareas()
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->count();
+            $completadas = $this->tareas()
+                ->whereYear('completed_at', $year)
+                ->whereMonth('completed_at', $month)
+                ->where('completada', true)
+                ->count();
+
+            if ($totalTareas === 0) return 0;
+
+            $tasa = $completadas / $totalTareas;
+            return match (true) {
+                $tasa >= 0.95 => 5.0,
+                $tasa >= 0.85 => 4.0,
+                $tasa >= 0.70 => 3.0,
+                $tasa >= 0.50 => 2.0,
+                $tasa >= 0.30 => 1.0,
+                default => 0.5,
+            };
+        }
 
         $totalWorkSeconds = 0;
         $totalPenaltySeconds = 0;
@@ -182,10 +204,10 @@ class User extends Authenticatable
             $efficiency >= 0.80 => 3.5,
             $efficiency >= 0.75 => 3.0,
             $efficiency >= 0.70 => 2.5,
-            $efficiency >= 0.65 => 2.0,
-            $efficiency >= 0.60 => 1.5,
-            $efficiency >= 0.55 => 1.0,
-            default             => 0.5,
+            $efficiency >= 0.60 => 2.0,
+            $efficiency >= 0.50 => 1.5,
+            $efficiency >= 0.40 => 1.0,
+            default => 0.5,
         };
     }
 }

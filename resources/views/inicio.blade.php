@@ -49,7 +49,7 @@
                     <div class="space-y-2">
                         <span class="text-xs font-semibold text-slate-500 uppercase">Mis Flujos</span>
                         <h3 class="text-3xl font-bold text-slate-800">{{ $misFlujos }}</h3>
-                        <span class="text-xs font-medium text-slate-400">flujos que pertenezco</span>
+                        <span class="text-xs font-medium text-slate-400">donde participo</span>
                     </div>
                     <div class="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
@@ -67,12 +67,22 @@
                 </div>
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-start">
                     <div class="space-y-2">
-                        <span class="text-xs font-semibold text-slate-500 uppercase">Tareas Pendientes</span>
-                        <h3 class="text-3xl font-bold text-slate-800">{{ $tareasPendientes }}</h3>
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Tareas Personales</span>
+                        <h3 class="text-3xl font-bold text-slate-800">{{ $tareasPersonales }}</h3>
                         <span class="text-xs font-medium text-slate-400">por completar</span>
                     </div>
                     <div class="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-start">
+                    <div class="space-y-2">
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Tareas de Flujo</span>
+                        <h3 class="text-3xl font-bold text-slate-800">{{ $tareasFlujo }}</h3>
+                        <span class="text-xs font-medium text-slate-400">pendientes de workflow</span>
+                    </div>
+                    <div class="p-2.5 bg-violet-50 text-violet-600 rounded-xl">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                     </div>
                 </div>
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-start">

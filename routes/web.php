@@ -10,6 +10,7 @@ use App\Http\Controllers\FlujoTrabajoController;
 use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\LogAuditoriaController;
 use App\Http\Controllers\NotificacionController;
+use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SolicitudClienteController;
@@ -55,6 +56,11 @@ Route::middleware(['auth', 'suspended'])->group(function () {
     Route::post('/notificaciones/{notificacion}/leido', [NotificacionController::class, 'marcarLeido'])->name('notificaciones.leido');
     Route::post('/notificaciones/marcar-todas', [NotificacionController::class, 'marcarTodasLeido'])->name('notificaciones.marcar-todas');
 
+    Route::get('/notas', [NoteController::class, 'index'])->name('notas.index');
+    Route::post('/notas', [NoteController::class, 'store'])->name('notas.store');
+    Route::put('/notas/{note}', [NoteController::class, 'update'])->name('notas.update');
+    Route::delete('/notas/{note}', [NoteController::class, 'destroy'])->name('notas.destroy');
+
     Route::get('/personal', [PersonalController::class, 'index'])->name('personal.index');
     Route::get('/personal/{user}/detalle', [PersonalController::class, 'detalle'])->name('personal.detalle');
     Route::post('/personal/{user}/rol', [PersonalController::class, 'cambiarRol'])->name('personal.rol');
@@ -78,7 +84,7 @@ Route::middleware(['auth', 'suspended'])->group(function () {
     Route::resource('equipos', EquipoController::class)->except(['show']);
 
     Route::prefix('admin')->middleware('auth')->group(function () {
-        Route::get('/solicitudes', [\App\Http\Controllers\AdminSolicitudController::class, 'index'])->name('admin.solicitudes');
+        Route::get('/solicitudes', [\App\Http\Controllers\SolicitudClienteController::class, 'misSolicitudes'])->name('admin.solicitudes');
         Route::post('/solicitudes/{user}/aprobar', [\App\Http\Controllers\AdminSolicitudController::class, 'aprobar'])->name('admin.solicitudes.aprobar');
         Route::post('/solicitudes/{user}/rechazar', [\App\Http\Controllers\AdminSolicitudController::class, 'rechazar'])->name('admin.solicitudes.rechazar');
         Route::post('/solicitudes/tarea/{tarea}/aprobar', [\App\Http\Controllers\AdminSolicitudController::class, 'aprobarTarea'])->name('admin.solicitudes.aprobar-tarea');

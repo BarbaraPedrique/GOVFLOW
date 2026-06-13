@@ -23,70 +23,88 @@ class PersonalController extends Controller
         }
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $this->autorizar();
 
-        $personal = User::with(['role', 'equipos', 'roleHistorial.role', 'tareas', 'sessions.breaks'])
-            ->where('status', '!=', 'pendiente')
-            ->orderBy('name')
-            ->get()
-            ->map(function ($user) {
-                $totalTareas = $user->tareas->count();
-                $completadas = $user->tareas->where('completada', true)->count();
-                $rendimiento = $totalTareas > 0 ? round(($completadas / $totalTareas) * 100) : 0;
+        $base = User::with(['role', 'equipos', 'roleHistorial.role', 'tareas', 'sessions.breaks'])
+            ->where('status', '!=', 'pendiente');
 
-                $equipos = $user->equipos->map(function ($eq) {
-                    $rol = $eq->pivot->rol ?? 'miembro';
-                    $nombreRol = match ($rol) {
-                        'lider_equipo' => 'Líder',
-                        'empleado' => 'Empleado',
-                        default => 'Miembro'
-                    };
-                    return (object) [
-                        'id' => $eq->id,
-                        'nombre' => $eq->nombre,
-                        'rol' => $nombreRol,
-                    ];
-                });
+        if ($request->filled('role_id')) {
+            $base->where('role_id', $request->role_id);
+        }
+        if ($request->filled('equipo_id')) {
+            $base->whereHas('equipos', fn($q) => $q->where('equipo_id', $request->equipo_id));
+        }
+        if ($request->filled('fecha_desde')) {
+            $base->whereDate('created_at', '>=', $request->fecha_desde);
+        }
+        if ($request->filled('fecha_hasta')) {
+            $base->whereDate('created_at', '<=', $request->fecha_hasta);
+        }
 
-                $rolesAnteriores = $user->roleHistorial
-                    ->where('role_id', '!=', $user->role_id)
-                    ->pluck('role.name')
-                    ->toArray();
+        $base->orderBy('name');
 
-                $diasDesdeRegistro = now()->diffInDays($user->created_at);
-                $tiempoRegistro = match (true) {
-                    $diasDesdeRegistro < 1 => 'Hoy',
-                    $diasDesdeRegistro < 30 => $diasDesdeRegistro . ' día(s)',
-                    $diasDesdeRegistro < 365 => floor($diasDesdeRegistro / 30) . ' mes(es)',
-                    default => floor($diasDesdeRegistro / 365) . ' año(s)',
+        $allUsers = (clone $base)->get();
+
+        $personal = (clone $base)->paginate(8)->through(function ($user) {
+            $totalTareas = $user->tareas->count();
+            $completadas = $user->tareas->where('completada', true)->count();
+            $rendimiento = $totalTareas > 0 ? round(($completadas / $totalTareas) * 100) : 0;
+
+            $equipos = $user->equipos->map(function ($eq) {
+                $rol = $eq->pivot->rol ?? 'miembro';
+                $nombreRol = match ($rol) {
+                    'lider_equipo' => 'Líder',
+                    'empleado' => 'Empleado',
+                    default => 'Miembro'
                 };
-
                 return (object) [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'apodo' => $user->apodo,
-                    'email' => $user->email,
-                    'foto' => $user->foto_url,
-                    'role' => $user->role,
-                    'status' => $user->status,
-                    'rendimiento' => $rendimiento,
-                    'totalTareas' => $totalTareas,
-                    'completadas' => $completadas,
-                    'equipos' => $equipos,
-                    'rolesAnteriores' => $rolesAnteriores,
-                    'tiempoRegistro' => $tiempoRegistro,
-                    'creado' => $user->created_at,
-                    'estrellas' => $user->calcularEstrellasMes(),
+                    'id' => $eq->id,
+                    'nombre' => $eq->nombre,
+                    'rol' => $nombreRol,
                 ];
             });
 
+            $rolesAnteriores = $user->roleHistorial
+                ->where('role_id', '!=', $user->role_id)
+                ->pluck('role.name')
+                ->toArray();
+
+            $diasDesdeRegistro = now()->diffInDays($user->created_at);
+            $tiempoRegistro = match (true) {
+                $diasDesdeRegistro < 1 => 'Hoy',
+                $diasDesdeRegistro < 30 => $diasDesdeRegistro . ' día(s)',
+                $diasDesdeRegistro < 365 => floor($diasDesdeRegistro / 30) . ' mes(es)',
+                default => floor($diasDesdeRegistro / 365) . ' año(s)',
+            };
+
+            return (object) [
+                'id' => $user->id,
+                'name' => $user->name,
+                'apodo' => $user->apodo,
+                'email' => $user->email,
+                'foto' => $user->foto_url,
+                'role' => $user->role,
+                'status' => $user->status,
+                'rendimiento' => $rendimiento,
+                'totalTareas' => $totalTareas,
+                'completadas' => $completadas,
+                'equipos' => $equipos,
+                'rolesAnteriores' => $rolesAnteriores,
+                'tiempoRegistro' => $tiempoRegistro,
+                'creado' => $user->created_at,
+                'estrellas' => $user->calcularEstrellasMes(),
+            ];
+        });
+
+        $personal->appends(request()->query());
+
         $stats = (object) [
-            'total' => $personal->count(),
-            'conEquipo' => $personal->filter(fn($p) => $p->equipos->isNotEmpty())->count(),
-            'sinEquipo' => $personal->filter(fn($p) => $p->equipos->isEmpty())->count(),
-            'rendimientoPromedio' => $personal->avg('rendimiento'),
+            'total' => $allUsers->count(),
+            'conEquipo' => $allUsers->filter(fn($p) => $p->equipos->isNotEmpty())->count(),
+            'sinEquipo' => $allUsers->filter(fn($p) => $p->equipos->isEmpty())->count(),
+            'rendimientoPromedio' => $allUsers->avg(fn($p) => $p->tareas->count() > 0 ? round(($p->tareas->where('completada', true)->count() / $p->tareas->count()) * 100) : 0),
         ];
 
         $roles = Role::whereNotIn('slug', ['super_admin'])->orderBy('name')->get();
@@ -271,7 +289,7 @@ class PersonalController extends Controller
 
         $nombre = $user->name;
         LogAuditoria::registrar('eliminar_usuario', 'User', $user->id, "Usuario {$nombre} eliminado por " . Auth::user()->name);
-        $user->delete();
+        User::destroy($user->id);
 
         return redirect()->route('personal.index')->with('success', "Perfil de {$nombre} eliminado.");
     }

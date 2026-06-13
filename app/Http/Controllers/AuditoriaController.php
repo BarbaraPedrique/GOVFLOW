@@ -22,13 +22,18 @@ class AuditoriaController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = LogAuditoria::with('user');
+        $query = LogAuditoria::query()->with('user');
 
         $userRank = $user ? (self::HIERARCHY[$user->role?->slug] ?? 99) : 99;
 
         if ($userRank >= 3) {
             $visibleSlugs = array_keys(array_filter(self::HIERARCHY, fn($r) => $r >= $userRank));
-            $visibleUserIds = User::whereIn('role_id', Role::whereIn('slug', $visibleSlugs)->pluck('id'))->pluck('id');
+            /** @var \Illuminate\Database\Eloquent\Builder $roleQuery */
+            $roleQuery = Role::query();
+            $roleIds = $roleQuery->whereIn('slug', $visibleSlugs)->pluck('id');
+            /** @var \Illuminate\Database\Eloquent\Builder $userQuery */
+            $userQuery = User::query();
+            $visibleUserIds = $userQuery->whereIn('role_id', $roleIds)->pluck('id');
             $query->whereIn('user_id', $visibleUserIds);
         }
 
@@ -38,7 +43,7 @@ class AuditoriaController extends Controller
         }
 
         if ($request->filled('departamento')) {
-            $flujoIds = FlujoTrabajo::where('departamento', $request->departamento)->pluck('id');
+            $flujoIds = FlujoTrabajo::query()->where('departamento', $request->departamento)->pluck('id');
             $query->where(function ($q) use ($flujoIds) {
                 $q->whereIn('entidad_id', $flujoIds)
                   ->where('entidad_type', 'App\Models\FlujoTrabajo');
@@ -74,11 +79,12 @@ class AuditoriaController extends Controller
             ];
         })->sortByDesc(fn ($g) => $g->ultimo);
 
-        $flujos = FlujoTrabajo::orderBy('nombre')->get();
-        $departamentos = FlujoTrabajo::distinct()->pluck('departamento')->sort();
+        /** @var \Illuminate\Database\Eloquent\Builder $flujoQuery */
+        $flujoQuery = FlujoTrabajo::query();
+        $flujos = $flujoQuery->orderBy('nombre')->get();
+        $departamentos = FlujoTrabajo::query()->distinct()->pluck('departamento')->sort();
         $totalEventos = $logs->count();
         $proyectosActivos = $grupos->count();
-        $userRank = $userRank;
 
         return view('auditoria', compact(
             'grupos', 'flujos', 'departamentos',
@@ -91,9 +97,9 @@ class AuditoriaController extends Controller
         if (!$id) return 'Sistema';
 
         return match ($type) {
-            'App\Models\FlujoTrabajo' => FlujoTrabajo::find($id)?->nombre ?? "Flujo #$id",
-            'App\Models\Tarea'        => Tarea::find($id)?->titulo ?? "Tarea #$id",
-            'App\Models\User'         => User::find($id)?->name ?? "Usuario #$id",
+            'App\Models\FlujoTrabajo' => FlujoTrabajo::query()->find($id)?->nombre ?? "Flujo #$id",
+            'App\Models\Tarea'        => Tarea::query()->find($id)?->titulo ?? "Tarea #$id",
+            'App\Models\User'         => User::query()->find($id)?->name ?? "Usuario #$id",
             default                   => class_basename($type) . " #$id",
         };
     }

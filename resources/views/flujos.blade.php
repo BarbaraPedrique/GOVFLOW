@@ -62,6 +62,9 @@
         'paso_index' => $p->paso_index,
         'flujo_nombre' => $p->ejecucion?->flujoTrabajo?->nombre ?? '—',
         'fecha_limite' => $p->fecha_limite?->format('d/m/Y H:i'),
+        'mensaje' => $p->mensaje,
+        'archivo_url' => $p->archivo ? asset('storage/' . $p->archivo) : null,
+        'archivo_nombre' => $p->archivo ? basename($p->archivo) : null,
     ])->values()) }},
     abrirPaso(id) {
         this.pasoActual = this.misPasos.find(p => p.id === id);
@@ -108,14 +111,21 @@
 }">
 
     <div class="flex items-center gap-3">
-        <a href="{{ route('flujos', ['ver' => 'mios']) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold {{ request('ver') === 'mios' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100' }}">
-            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-            Mis Flujos
-        </a>
-        <a href="{{ route('flujos') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold {{ request('ver') !== 'mios' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100' }}">
-            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-            Todos los Flujos
-        </a>
+        @if(in_array(Auth::user()->role?->slug, ['empleado', 'lider_equipo']))
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                Mis Flujos
+            </span>
+        @else
+            <a href="{{ route('flujos', ['ver' => 'mios']) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold {{ request('ver') === 'mios' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100' }}">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                Mis Flujos
+            </a>
+            <a href="{{ route('flujos') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold {{ request('ver') !== 'mios' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100' }}">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                Todos los Flujos
+            </a>
+        @endif
     </div>
 
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -169,7 +179,7 @@
                     @foreach($flujos as $flujo)
                         @php
                             $misPasosFlujo = $misPasosPendientes->filter(fn($p) => $p->ejecucion?->flujo_trabajo_id === $flujo->id);
-                            $ejecucionFlujo = $misPasosFlujo->first()?->ejecucion;
+                            $ejecucionFlujo = $misPasosFlujo->first()?->ejecucion ?? $flujo->ejecuciones->first();
                             $counts = $ejecucionFlujo && isset($pasoCounts[$ejecucionFlujo->id])
                                 ? $pasoCounts[$ejecucionFlujo->id]
                                 : null;
@@ -273,7 +283,7 @@
                             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-start">
                                 <div class="space-y-1">
                                     <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Actividades Totales</span>
-                                    <h3 class="text-2xl font-bold text-slate-800">{{ $flujo->estados->flatMap->actividades->count() }} Actividades</h3>
+                                    <h3 class="text-2xl font-bold text-slate-800">{{ $flujo->estados->flatMap->actividades->count() + $flujo->ejecuciones->sum('pasos_completados') }} Actividades</h3>
                                 </div>
                                 <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
@@ -579,7 +589,7 @@
                                         <p class="text-xs text-amber-600 font-medium mt-1">Esperando tu revisión</p>
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0 ml-4">
-                                        <button @click="abrirRevision({id: {{ $paso->id }}, paso_nombre: '{{ $paso->paso_nombre }}', flujo_nombre: '{{ $paso->ejecucion?->flujoTrabajo?->nombre ?? '—' }}'})" class="px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition-colors">
+                                        <button @click="abrirRevision(misRevisiones.find(r => r.id === {{ $paso->id }}))" class="px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition-colors">
                                             Revisar
                                         </button>
                                     </div>
@@ -603,9 +613,11 @@
                         <button @click="if(!selectedFlujo) { alert('Selecciona un flujo.'); return; } fetch('{{ url('/flujos') }}/'+selectedFlujo+'/iniciar',{method:'POST',headers:{'X-CSRF-TOKEN':csrf,'Accept':'application/json'}}).then(r=>r.json()).then(d=>{if(d.success)location.reload();else alert(d.message||'Error al iniciar flujo.')}).catch(e=>alert('Error de red: '+e.message))" class="px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors">
                             Iniciar ejecución
                         </button>
+                        @if($esSuperAdmin || Auth::user()->role?->slug === 'administrador')
                         <button @click="eliminarFlujo(selectedFlujo)" x-show="selectedFlujo" class="px-4 py-2.5 bg-rose-600 text-white text-sm font-semibold rounded-xl hover:bg-rose-700 transition-colors">
                             Eliminar flujo
                         </button>
+                        @endif
                     </div>
                     <div x-show="selectedFlujo" class="mt-2">
                         <span class="text-[11px] text-slate-400">Flujo seleccionado: <span x-text="selectedFlujo ? (flujoNombres[selectedFlujo] || 'ID: ' + selectedFlujo) : ''"></span></span>
@@ -651,6 +663,17 @@
                 <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 space-y-4">
                     <h3 class="text-lg font-bold text-slate-800" x-text="'Revisar: ' + (revisionActual?.paso_nombre || '')"></h3>
                     <p class="text-sm text-slate-500" x-text="'Flujo: ' + (revisionActual?.flujo_nombre || '')"></p>
+                    <div x-show="revisionActual?.mensaje" class="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Mensaje del ejecutor</label>
+                        <p class="text-sm text-slate-700 italic" x-text="revisionActual?.mensaje"></p>
+                    </div>
+                    <div x-show="revisionActual?.archivo_url" class="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                        <label class="block text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">Archivo adjunto</label>
+                        <a :href="revisionActual?.archivo_url" target="_blank" class="text-sm text-blue-600 hover:text-blue-800 underline font-medium flex items-center gap-1.5">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            <span x-text="revisionActual?.archivo_nombre || 'Descargar archivo'"></span>
+                        </a>
+                    </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Decisión</label>
                         <div class="flex gap-3">

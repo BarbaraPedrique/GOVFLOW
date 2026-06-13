@@ -108,16 +108,58 @@
                         </select>
                     </div>
                     <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Descripción</label>
+                        <textarea x-model="nuevaTarea.descripcion" rows="2" placeholder="Descripción breve" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm"></textarea>
+                    </div>
+                    <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Vence</label>
                         <input type="date" x-model="nuevaTarea.fecha_vencimiento" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Inicio</label>
-                        <input type="time" x-model="nuevaTarea.hora_inicio" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
+                        <div class="flex gap-1 items-center">
+                            <select x-model="nuevaTarea.ih" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                <option value="">--</option>
+                                @for ($h = 1; $h <= 12; $h++)
+                                    <option value="{{ $h }}">{{ $h }}</option>
+                                @endfor
+                            </select>
+                            <span class="text-slate-400 text-xs">:</span>
+                            <select x-model="nuevaTarea.im" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                <option value="">--</option>
+                                <option value="00">00</option>
+                                <option value="15">15</option>
+                                <option value="30">30</option>
+                                <option value="45">45</option>
+                            </select>
+                            <select x-model="nuevaTarea.ip" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Fin</label>
-                        <input type="time" x-model="nuevaTarea.hora_fin" class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
+                        <div class="flex gap-1 items-center">
+                            <select x-model="nuevaTarea.fh" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                <option value="">--</option>
+                                @for ($h = 1; $h <= 12; $h++)
+                                    <option value="{{ $h }}">{{ $h }}</option>
+                                @endfor
+                            </select>
+                            <span class="text-slate-400 text-xs">:</span>
+                            <select x-model="nuevaTarea.fm" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                <option value="">--</option>
+                                <option value="00">00</option>
+                                <option value="15">15</option>
+                                <option value="30">30</option>
+                                <option value="45">45</option>
+                            </select>
+                            <select x-model="nuevaTarea.fp" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Receso</label>
@@ -154,7 +196,7 @@
                                                 <p class="text-xs text-slate-400 mt-1" x-show="tarea.categoria" x-text="tarea.categoria"></p>
                                                 <p class="text-xs text-slate-400 mt-0.5" x-show="tarea.fecha_vencimiento" x-text="'Vence: '+new Date(tarea.fecha_vencimiento+'T00:00:00').toLocaleDateString('es-ES')"></p>
                                                 <p class="text-xs text-slate-400 mt-0.5" x-show="tarea.equipo?.nombre" x-text="'📋 ' + tarea.equipo.nombre"></p>
-                                                <p class="text-xs text-slate-400 mt-0.5" x-show="tarea.hora_inicio && tarea.hora_fin" x-text="(tarea.hora_inicio||'').substring(0,5) + ' - ' + (tarea.hora_fin||'').substring(0,5) + (tarea.receso ? ' (receso '+tarea.receso+'\' )' : '')"></p>
+                                                <p class="text-xs text-slate-400 mt-0.5" x-show="tarea.hora_inicio && tarea.hora_fin" x-text="formatHora(tarea.hora_inicio) + ' - ' + formatHora(tarea.hora_fin) + (tarea.receso ? ' (receso '+tarea.receso+'\')' : '')"></p>
                                             </div>
                                             <div class="flex items-center gap-1 flex-shrink-0">
                                                 <button @click="editarTarea(tarea)" class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors" title="Editar tarea">
@@ -236,27 +278,65 @@
                             <input type="date" x-model="editForm.fecha_vencimiento" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
                         </div>
                     </div>
-                    <div class="grid grid-cols-3 gap-4">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 mb-1">Hora Inicio</label>
-                            <input type="time" x-model="editForm.hora_inicio" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
+                            <div class="flex gap-1 items-center">
+                                <select x-model="editForm.eih" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                    <option value="">--</option>
+                                    @for ($h = 1; $h <= 12; $h++)
+                                        <option value="{{ $h }}">{{ $h }}</option>
+                                    @endfor
+                                </select>
+                                <span class="text-slate-400 text-xs">:</span>
+                                <select x-model="editForm.eim" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                    <option value="">--</option>
+                                    <option value="00">00</option>
+                                    <option value="15">15</option>
+                                    <option value="30">30</option>
+                                    <option value="45">45</option>
+                                </select>
+                                <select x-model="editForm.eip" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 mb-1">Hora Fin</label>
-                            <input type="time" x-model="editForm.hora_fin" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm">
+                            <div class="flex gap-1 items-center">
+                                <select x-model="editForm.efh" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                    <option value="">--</option>
+                                    @for ($h = 1; $h <= 12; $h++)
+                                        <option value="{{ $h }}">{{ $h }}</option>
+                                    @endfor
+                                </select>
+                                <span class="text-slate-400 text-xs">:</span>
+                                <select x-model="editForm.efm" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                    <option value="">--</option>
+                                    <option value="00">00</option>
+                                    <option value="15">15</option>
+                                    <option value="30">30</option>
+                                    <option value="45">45</option>
+                                </select>
+                                <select x-model="editForm.efp" class="px-2 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white w-16">
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Receso</label>
-                            <select x-model="editForm.receso" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white">
-                                <option value="">Sin receso</option>
-                                <option value="15">15 min</option>
-                                <option value="30">30 min</option>
-                                <option value="45">45 min</option>
-                                <option value="60">60 min</option>
-                                <option value="90">90 min</option>
-                                <option value="120">120 min</option>
-                            </select>
-                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Receso</label>
+                        <select x-model="editForm.receso" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#007BFF] text-sm bg-white">
+                            <option value="">Sin receso</option>
+                            <option value="15">15 min</option>
+                            <option value="30">30 min</option>
+                            <option value="45">45 min</option>
+                            <option value="60">60 min</option>
+                            <option value="90">90 min</option>
+                            <option value="120">120 min</option>
+                        </select>
                     </div>
                     <div class="flex justify-end gap-3 pt-2">
                         <button type="button" @click="editModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancelar</button>
@@ -288,9 +368,9 @@ document.addEventListener('alpine:init', () => {
     Alpine.store('tareas', @json($tareas->flatten(1)->values() ?? []));
 
     Alpine.data('tareasApp', () => ({
-        nuevaTarea: { titulo: '', prioridad: 'media', categoria: '', fecha_vencimiento: '', hora_inicio: '', hora_fin: '', receso: '', equipo_id: '' },
+        nuevaTarea: { titulo: '', descripcion: '', prioridad: 'media', categoria: '', fecha_vencimiento: '', ih: '', im: '', ip: 'AM', fh: '', fm: '', fp: 'PM', receso: '', equipo_id: '' },
         editModal: false,
-        editForm: { id: null, titulo: '', descripcion: '', prioridad: 'media', categoria: '', equipo_id: '', fecha_vencimiento: '', hora_inicio: '', hora_fin: '', receso: '' },
+        editForm: { id: null, titulo: '', descripcion: '', prioridad: 'media', categoria: '', equipo_id: '', fecha_vencimiento: '', eih: '', eim: '', eip: 'AM', efh: '', efm: '', efp: 'PM', receso: '' },
         showDeleteModal: false,
         deleteId: null,
         deleteTitulo: null,
@@ -298,14 +378,38 @@ document.addEventListener('alpine:init', () => {
         csrf: '{{ csrf_token() }}',
         urlBase: window.location.href.replace(window.location.search, '').replace(/\/$/, ''),
 
+        to24(h, m, p) {
+            if (!h || !m) return null;
+            let h24 = parseInt(h);
+            if (p === 'PM' && h24 !== 12) h24 += 12;
+            if (p === 'AM' && h24 === 12) h24 = 0;
+            return String(h24).padStart(2, '0') + ':' + m;
+        },
+        formatHora(hora) {
+            if (!hora) return '';
+            const { h, m, p } = this.to12(hora);
+            return h + ':' + m + ' ' + p;
+        },
+        to12(hora) {
+            if (!hora) return { h: '', m: '', p: 'AM' };
+            const parts = hora.split(':');
+            let hInt = parseInt(parts[0]);
+            const p = hInt >= 12 ? 'PM' : 'AM';
+            hInt = hInt % 12 || 12;
+            return { h: String(hInt), m: parts[1] || '00', p };
+        },
+
         agregarTarea() {
             const form = new FormData();
             form.append('titulo', this.nuevaTarea.titulo);
+            if (this.nuevaTarea.descripcion) form.append('descripcion', this.nuevaTarea.descripcion);
             form.append('prioridad', this.nuevaTarea.prioridad);
             if (this.nuevaTarea.categoria) form.append('categoria', this.nuevaTarea.categoria);
             if (this.nuevaTarea.fecha_vencimiento) form.append('fecha_vencimiento', this.nuevaTarea.fecha_vencimiento);
-            if (this.nuevaTarea.hora_inicio) form.append('hora_inicio', this.nuevaTarea.hora_inicio);
-            if (this.nuevaTarea.hora_fin) form.append('hora_fin', this.nuevaTarea.hora_fin);
+            const hi = this.to24(this.nuevaTarea.ih, this.nuevaTarea.im, this.nuevaTarea.ip);
+            if (hi) form.append('hora_inicio', hi);
+            const hf = this.to24(this.nuevaTarea.fh, this.nuevaTarea.fm, this.nuevaTarea.fp);
+            if (hf) form.append('hora_fin', hf);
             if (this.nuevaTarea.receso) form.append('receso', this.nuevaTarea.receso);
             if (this.nuevaTarea.equipo_id) form.append('equipo_id', this.nuevaTarea.equipo_id);
 
@@ -313,9 +417,15 @@ document.addEventListener('alpine:init', () => {
                 .then(r => r.json())
                 .then(data => {
                     if (data?.success) {
-                        const t = data.tarea || { id: data.id, titulo: this.nuevaTarea.titulo, prioridad: this.nuevaTarea.prioridad, categoria: this.nuevaTarea.categoria, fecha_vencimiento: this.nuevaTarea.fecha_vencimiento, hora_inicio: this.nuevaTarea.hora_inicio, hora_fin: this.nuevaTarea.hora_fin, receso: this.nuevaTarea.receso, equipo_id: this.nuevaTarea.equipo_id, completada: false, completed_at: null, orden: 999 };
+                        const t = data.tarea || {
+                            id: data.id, titulo: this.nuevaTarea.titulo, descripcion: this.nuevaTarea.descripcion,
+                            prioridad: this.nuevaTarea.prioridad, categoria: this.nuevaTarea.categoria,
+                            fecha_vencimiento: this.nuevaTarea.fecha_vencimiento, hora_inicio: hi, hora_fin: hf,
+                            receso: this.nuevaTarea.receso, equipo_id: this.nuevaTarea.equipo_id,
+                            completada: false, completed_at: null, orden: 999,
+                        };
                         Alpine.store('tareas').push(t);
-                        this.nuevaTarea = { titulo: '', prioridad: 'media', categoria: '', fecha_vencimiento: '', hora_inicio: '', hora_fin: '', receso: '', equipo_id: '' };
+                        this.nuevaTarea = { titulo: '', descripcion: '', prioridad: 'media', categoria: '', fecha_vencimiento: '', ih: '', im: '', ip: 'AM', fh: '', fm: '', fp: 'PM', receso: '', equipo_id: '' };
                     }
                 })
                 .catch(e => console.error('Error al crear tarea:', e));
@@ -361,19 +471,27 @@ document.addEventListener('alpine:init', () => {
             this.dragTarea = null;
         },
         editarTarea(tarea) {
+            const hi = this.to12(tarea.hora_inicio);
+            const hf = this.to12(tarea.hora_fin);
             this.editForm.id = tarea.id;
             this.editForm.titulo = tarea.titulo;
             this.editForm.descripcion = tarea.descripcion || '';
             this.editForm.prioridad = tarea.prioridad;
             this.editForm.categoria = tarea.categoria || '';
             this.editForm.equipo_id = tarea.equipo_id || '';
-            this.editForm.fecha_vencimiento = tarea.fecha_vencimiento || '';
-            this.editForm.hora_inicio = tarea.hora_inicio || '';
-            this.editForm.hora_fin = tarea.hora_fin || '';
+            this.editForm.fecha_vencimiento = tarea.fecha_vencimiento ? tarea.fecha_vencimiento.substring(0, 10) : '';
+            this.editForm.eih = hi.h;
+            this.editForm.eim = hi.m;
+            this.editForm.eip = hi.p;
+            this.editForm.efh = hf.h;
+            this.editForm.efm = hf.m;
+            this.editForm.efp = hf.p;
             this.editForm.receso = tarea.receso || '';
             this.editModal = true;
         },
         guardarEdicion() {
+            const hi = this.to24(this.editForm.eih, this.editForm.eim, this.editForm.eip);
+            const hf = this.to24(this.editForm.efh, this.editForm.efm, this.editForm.efp);
             const data = {
                 titulo: this.editForm.titulo,
                 descripcion: this.editForm.descripcion,
@@ -381,8 +499,8 @@ document.addEventListener('alpine:init', () => {
                 categoria: this.editForm.categoria,
                 equipo_id: this.editForm.equipo_id || null,
                 fecha_vencimiento: this.editForm.fecha_vencimiento || null,
-                hora_inicio: this.editForm.hora_inicio || null,
-                hora_fin: this.editForm.hora_fin || null,
+                hora_inicio: hi,
+                hora_fin: hf,
                 receso: this.editForm.receso || null,
             };
             fetch(this.urlBase+'/'+this.editForm.id, { method: 'PUT', headers: { 'X-CSRF-TOKEN': this.csrf, 'Content-Type': 'application/json' }, body: JSON.stringify(data) })

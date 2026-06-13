@@ -120,7 +120,26 @@ class SolicitudClienteController extends Controller
             ->with(['ejecucion.flujoTrabajo'])
             ->get();
 
-        return view('solicitudes_index', compact('pendientes', 'historial', 'equiposDisponibles', 'revisionesFlujo'));
+        $registrosPendientes = collect();
+        $registrosHistorial = collect();
+        if ($user->role?->slug === 'super_admin') {
+            $registrosPendientes = User::where('status', User::STATUS_PENDIENTE)
+                ->orderByDesc('created_at')
+                ->get();
+
+            $tareasRegistro = Tarea::where('categoria', 'Solicitud')
+                ->where('descripcion', 'like', 'user_id:%')
+                ->whereIn('status', ['aprobado', 'rechazado'])
+                ->orderByDesc('updated_at')
+                ->get();
+
+            $registrosHistorial = $tareasRegistro;
+        }
+
+        return view('solicitudes_index', compact(
+            'pendientes', 'historial', 'equiposDisponibles', 'revisionesFlujo',
+            'registrosPendientes', 'registrosHistorial'
+        ));
     }
 
     public function aprobarSolicitud(Tarea $tarea)

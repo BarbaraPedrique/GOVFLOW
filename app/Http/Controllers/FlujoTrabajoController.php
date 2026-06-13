@@ -6,10 +6,12 @@ use App\Models\Equipo;
 use App\Models\FlujoEjecucion;
 use App\Models\FlujoPasoAsignacion;
 use App\Models\FlujoTrabajo;
+use App\Models\LogAuditoria;
 use App\Models\Notificacion;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class FlujoTrabajoController extends Controller
 {
@@ -82,45 +84,80 @@ class FlujoTrabajoController extends Controller
             ->with('success', 'Flujo de trabajo creado correctamente.');
     }
 
-    public function edit(FlujoTrabajo $flujo)
+    public function show(FlujoTrabajo $flujos_trabajo)
+    {
+        return redirect()->route('flujos-trabajo.edit', $flujos_trabajo);
+    }
+
+    public function edit(FlujoTrabajo $flujos_trabajo)
     {
         $equipos = Auth::user()->role?->slug === 'super_admin'
             ? Equipo::orderBy('nombre')->get()
             : Equipo::orderBy('nombre')->get();
 
-        return view('flujos.edit', compact('flujo', 'equipos'));
+        return view('flujos.edit', compact('flujos_trabajo', 'equipos'));
     }
 
-    public function update(Request $request, FlujoTrabajo $flujo)
+    public function update(Request $request, FlujoTrabajo $flujos_trabajo)
     {
         $request->validate([
-            'nombre'       => 'required|string|max:255|unique:flujos_trabajo,nombre,'.$flujo->id,
+            'nombre'       => 'required|string|max:255|unique:flujos_trabajo,nombre,'.$flujos_trabajo->id,
             'departamento' => 'required|string|max:255',
             'estado'       => 'required|in:Activo,Borrador,Completado,Pausado',
             'equipo_id'    => 'nullable|exists:equipos,id',
         ]);
 
-        $flujo->update($request->only('nombre', 'departamento', 'estado', 'equipo_id'));
+        $flujos_trabajo->update($request->only('nombre', 'departamento', 'estado', 'equipo_id'));
 
         if ($request->wantsJson()) {
-            return response()->json(['success' => true, 'id' => $flujo->id]);
+            return response()->json(['success' => true, 'id' => $flujos_trabajo->id]);
         }
 
         return redirect()->route('flujos-trabajo.index')
             ->with('success', 'Flujo actualizado correctamente.');
     }
 
-    public function destroy(FlujoTrabajo $flujo)
+    public function destroy(FlujoTrabajo $flujos_trabajo)
     {
-        $flujo->ejecuciones()->delete();
-        $flujo->delete();
-
-        if (request()->wantsJson()) {
-            return response()->json(['success' => true]);
+        $user = Auth::user();
+        if (!in_array($user->role?->slug, ['super_admin', 'administrador'])) {
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'No tienes permiso para eliminar flujos.'], 403);
+            }
+            return back()->with('error', 'No tienes permiso para eliminar flujos.');
         }
 
-        return redirect()->route('flujos-trabajo.index')
-            ->with('success', 'Flujo eliminado correctamente.');
+        try {
+            $nombre = $flujos_trabajo->nombre;
+            $codigo = $flujos_trabajo->codigo;
+
+            DB::transaction(function () use ($flujos_trabajo) {
+                $flujos_trabajo->ejecuciones()->delete();
+                $flujos_trabajo->estados()->delete();
+                FlujoTrabajo::destroy($flujos_trabajo->id);
+            });
+
+            LogAuditoria::registrar(
+                accion: 'eliminar_flujo',
+                entidadType: 'FlujoTrabajo',
+                entidadId: $flujos_trabajo->id,
+                descripcion: "Flujo de trabajo {$codigo} — {$nombre} eliminado por " . Auth::user()->name,
+            );
+
+            if (request()->wantsJson()) {
+                return response()->json(['success' => true]);
+            }
+
+            return redirect()->route('flujos-trabajo.index')
+                ->with('success', 'Flujo eliminado correctamente.');
+        } catch (\Exception $e) {
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error al eliminar el flujo: ' . $e->getMessage()], 500);
+            }
+
+            return redirect()->route('flujos-trabajo.index')
+                ->with('error', 'Error al eliminar el flujo: ' . $e->getMessage());
+        }
     }
 
     public function showTimeline(Request $request)
@@ -133,28 +170,26 @@ class FlujoTrabajoController extends Controller
             ? Equipo::orderBy('nombre')->get()
             : $user->equipos()->orderBy('nombre')->get();
 
-        $query = FlujoTrabajo::with('estados', 'user', 'equipo');
+        $query = FlujoTrabajo::with('estados', 'user', 'equipo')
+            ->with(['ejecuciones' => function ($q) {
+                $q->withCount(['pasos as pasos_completados' => fn($qq) => $qq->where('estado', 'completado')]);
+            }]);
 
         if ($request->filled('equipo_id')) {
             $query->where('equipo_id', $request->equipo_id);
         }
 
-        if ($verMios) {
-            // "Mis Flujos": only flows where user has assigned ejecutores
-            $flujoRelIds = FlujoPasoAsignacion::whereHas('ejecutores', fn($q) => $q->where('user_id', $user->id))
+        if (!$esSuperAdmin) {
+            $flujoRelIds = FlujoPasoAsignacion::where(function ($q) use ($user) {
+                    $q->whereHas('ejecutores', fn($qq) => $qq->where('user_id', $user->id))
+                      ->orWhere('revisor_id', $user->id);
+                })
                 ->pluck('flujo_ejecucion_id')
                 ->pipe(fn($ids) => FlujoEjecucion::whereIn('id', $ids)->pluck('flujo_trabajo_id'))
                 ->unique()
                 ->toArray();
 
             $query->whereIn('id', $flujoRelIds);
-        } elseif (!$esSuperAdmin) {
-            // Non-super admin default: show team flows AND personal assigned flows
-            $equipoIds = $user->equipos()->pluck('equipos.id');
-            $query->where(function ($q) use ($equipoIds, $user) {
-                $q->whereIn('equipo_id', $equipoIds)
-                  ->orWhereHas('ejecuciones.pasos.ejecutores', fn($qq) => $qq->where('user_id', $user->id));
-            });
         }
 
         $flujos = $query->orderByDesc('id')->get();

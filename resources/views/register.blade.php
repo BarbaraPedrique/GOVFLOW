@@ -68,6 +68,7 @@
                             <select name="role" id="role" class="w-full pl-11 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#007BFF] focus:ring-1 focus:ring-[#007BFF] text-slate-700 appearance-none transition-colors">
                                 <option value="gerente">Gerente</option>
                                 <option value="administrador">Administrador</option>
+                                <option value="lider_equipo">Líder de Equipo</option>
                                 <option value="empleado">Empleado</option>
                             </select>
                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">

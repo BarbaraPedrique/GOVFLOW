@@ -58,6 +58,41 @@
             </div>
         </div>
 
+        <form method="GET" action="{{ route('personal.index') }}" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+            <div class="flex items-end gap-3 flex-wrap">
+                <div>
+                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Rol</label>
+                    <select name="role_id" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white min-w-[140px]">
+                        <option value="">Todos los roles</option>
+                        @foreach($roles as $r)
+                            <option value="{{ $r->id }}" {{ request('role_id') == $r->id ? 'selected' : '' }}>{{ $r->display_name ?? $r->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Equipo</label>
+                    <select name="equipo_id" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white min-w-[140px]">
+                        <option value="">Todos los equipos</option>
+                        @foreach($equipos as $eq)
+                            <option value="{{ $eq->id }}" {{ request('equipo_id') == $eq->id ? 'selected' : '' }}>{{ $eq->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Registro desde</label>
+                    <input type="date" name="fecha_desde" value="{{ request('fecha_desde') }}" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Registro hasta</label>
+                    <input type="date" name="fecha_hasta" value="{{ request('fecha_hasta') }}" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white">
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">Filtrar</button>
+                    <a href="{{ route('personal.index') }}" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition-colors">Limpiar</a>
+                </div>
+            </div>
+        </form>
+
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm">
             <table class="w-full text-[11px]">
                 <thead>
@@ -157,6 +192,12 @@
                 <div class="px-2 py-12 text-center text-sm text-slate-400">No hay personal registrado.</div>
             @endif
         </div>
+
+        @if($personal->hasPages())
+            <div class="flex justify-center">
+                {{ $personal->links() }}
+            </div>
+        @endif
 
         <div>
             <div x-show="show" x-cloak class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" @click.self="cerrar">

@@ -32,10 +32,12 @@ class EquipoController extends Controller
 
         $equipo = null;
         $gerentes = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
-        $lideres = User::whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo', 'gerente', 'administrador']))->orderBy('name')->get();
-        $empleados = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado', 'lider_equipo', 'gerente', 'administrador']))->orderBy('name')->get();
+        $admins = User::whereHas('role', fn($q) => $q->whereIn('slug', ['administrador', 'super_admin']))->orderBy('name')->get();
+        $gerentesEquipo = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
+        $lideres = User::whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo']))->orderBy('name')->get();
+        $empleados = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado']))->orderBy('name')->get();
 
-        return view('equipos.form', compact('equipo', 'gerentes', 'lideres', 'empleados'));
+        return view('equipos.form', compact('equipo', 'gerentes', 'admins', 'gerentesEquipo', 'lideres', 'empleados'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -114,11 +116,14 @@ class EquipoController extends Controller
         $this->authorizeAdmin($request);
 
         $gerentes = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
-        $todos = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado', 'lider_equipo', 'gerente', 'administrador', 'super_admin']))->orderBy('name')->get();
+        $admins = User::whereHas('role', fn($q) => $q->whereIn('slug', ['administrador', 'super_admin']))->orderBy('name')->get();
+        $gerentesEquipo = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
+        $lideres = User::whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo']))->orderBy('name')->get();
+        $empleados = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado']))->orderBy('name')->get();
 
         $equipo->load('miembros');
 
-        return view('equipos.form', compact('equipo', 'gerentes', 'todos'));
+        return view('equipos.form', compact('equipo', 'gerentes', 'admins', 'gerentesEquipo', 'lideres', 'empleados'));
     }
 
     public function update(Request $request, Equipo $equipo): RedirectResponse
@@ -204,7 +209,7 @@ class EquipoController extends Controller
             "Equipo '{$equipo->nombre}' eliminado",
         );
 
-        $equipo->delete();
+        Equipo::destroy($equipo->id);
 
         return redirect()->route('equipos.index')->with('success', 'Equipo eliminado correctamente.');
     }

@@ -16,7 +16,12 @@ class HorarioController extends Controller
         $horarios = Horario::where('user_id', auth()->id())->get();
         $tareas = Tarea::where('user_id', auth()->id())
             ->where('completada', false)
+            ->whereNull('completed_at')
             ->whereNotNull('fecha_vencimiento')
+            ->where(function ($q) {
+                $q->whereNull('categoria')
+                  ->orWhereNotIn('categoria', ['Horario', 'Flujo', 'Solicitud']);
+            })
             ->get();
         $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -28,11 +33,9 @@ class HorarioController extends Controller
 
             $tareasDelDia = $tareas->filter(function ($t) use ($i) {
                 return $t->fecha_vencimiento && (int) $t->fecha_vencimiento->format('N') - 1 === $i;
-            })->reject(function ($t) {
-                return $t->categoria === 'Horario';
             })->map(function ($t) use ($coloresPrioridad) {
-                $t->hora_inicio = '08:00:00';
-                $t->hora_fin = '09:00:00';
+                if (!$t->hora_inicio) $t->hora_inicio = '08:00:00';
+                if (!$t->hora_fin) $t->hora_fin = '09:00:00';
                 $t->color = $coloresPrioridad[$t->prioridad] ?? '#6B7280';
                 $t->es_tarea = true;
                 return $t;
@@ -118,7 +121,7 @@ class HorarioController extends Controller
             ->where('categoria', 'Horario')
             ->delete();
 
-        $horario->delete();
+        Horario::destroy($horario->id);
         return response()->json(['success' => true]);
     }
 }
