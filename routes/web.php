@@ -13,6 +13,7 @@ use App\Http\Controllers\NotificacionController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\SolicitudClienteController;
 use App\Http\Controllers\TareaController;
 use Illuminate\Support\Facades\Route;
@@ -69,6 +70,9 @@ Route::middleware(['auth', 'suspended'])->group(function () {
     Route::delete('/personal/{user}', [PersonalController::class, 'eliminar'])->name('personal.eliminar');
 
     Route::get('/logs-auditoria', [LogAuditoriaController::class, 'index'])->name('logs.auditoria');
+
+    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes');
+    Route::get('/reportes/pdf', [ReporteController::class, 'generarPdf'])->name('reportes.pdf');
 
     Route::get('/disenador', [DisenadorController::class, 'index'])->name('disenador');
     Route::put('/disenador/{flujo}/pasos', [DisenadorController::class, 'guardarPasos'])->name('disenador.guardar');

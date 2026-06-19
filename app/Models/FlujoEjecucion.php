@@ -12,6 +12,8 @@ class FlujoEjecucion extends Model
 
     protected $fillable = [
         'flujo_trabajo_id',
+        'flujo_codigo',
+        'flujo_nombre',
         'estado',
         'paso_actual_index',
     ];

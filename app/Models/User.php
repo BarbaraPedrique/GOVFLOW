@@ -154,8 +154,14 @@ class User extends Authenticatable
 
         if ($sessions->isEmpty()) {
             $totalTareas = $this->tareas()
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
+                ->where(function ($q) use ($year, $month) {
+                    $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
+                      ->orWhere(function ($q) use ($year, $month) {
+                          $q->whereYear('completed_at', $year)
+                            ->whereMonth('completed_at', $month)
+                            ->where('completada', true);
+                      });
+                })
                 ->count();
             $completadas = $this->tareas()
                 ->whereYear('completed_at', $year)

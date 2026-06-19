@@ -132,7 +132,6 @@ class FlujoTrabajoController extends Controller
             $codigo = $flujos_trabajo->codigo;
 
             DB::transaction(function () use ($flujos_trabajo) {
-                $flujos_trabajo->ejecuciones()->delete();
                 $flujos_trabajo->estados()->delete();
                 FlujoTrabajo::destroy($flujos_trabajo->id);
             });

@@ -183,29 +183,112 @@
                                                         <span class="inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded-full {{ $accionColor }}">{{ ucfirst($log->accion) }}</span>
                                                     </td>
                                                     <td class="px-3 py-2.5 text-slate-500 truncate max-w-[250px]" title="{{ $log->descripcion }}">{{ $log->descripcion }}</td>
+                                                    @php
+                                                        $etiquetasCampos = [
+                                                            'nombre' => 'Nombre',
+                                                            'descripcion' => 'Descripción',
+                                                            'codigo' => 'Código',
+                                                            'estado' => 'Estado',
+                                                            'prioridad' => 'Prioridad',
+                                                            'rol' => 'Rol',
+                                                            'email' => 'Correo electrónico',
+                                                            'telefono' => 'Teléfono',
+                                                            'fecha_inicio' => 'Fecha de inicio',
+                                                            'fecha_fin' => 'Fecha de fin',
+                                                            'entidad_type' => 'Tipo',
+                                                            'user_id' => 'Usuario',
+                                                            'equipo_id' => 'Equipo',
+                                                            'password' => 'Contraseña',
+                                                            'foto' => 'Foto',
+                                                            'apodo' => 'Apodo',
+                                                            'suspendido' => 'Suspensión',
+                                                            'checklist' => 'Lista de verificación',
+                                                            'titulo' => 'Título',
+                                                            'archivo' => 'Archivo adjunto',
+                                                            'pasos' => 'Pasos del flujo',
+                                                            'diseno' => 'Diseño del flujo',
+                                                            'trigger_evento' => 'Evento disparador',
+                                                            'trigger_descripcion' => 'Descripción del disparador',
+                                                            'version' => 'Versión',
+                                                        ];
+                                                        $formatearValor = function($v) {
+                                                            if ($v === null || $v === '') return '—';
+                                                            if ($v === 'activo') return 'Activo';
+                                                            if ($v === 'inactivo') return 'Inactivo';
+                                                            if ($v === 'pendiente') return 'Pendiente';
+                                                            if ($v === 'completado') return 'Completado';
+                                                            if ($v === 'en_progreso' || $v === 'en progreso') return 'En progreso';
+                                                            if ($v === 'rechazado') return 'Rechazado';
+                                                            if ($v === 'revisar') return 'En revisión';
+                                                            if ($v === '1' || $v === 1) return 'Sí';
+                                                            if ($v === '0' || $v === 0) return 'No';
+                                                            if ($v === 'alta') return 'Alta';
+                                                            if ($v === 'media') return 'Media';
+                                                            if ($v === 'baja') return 'Baja';
+                                                            return $v;
+                                                        };
+                                                    @endphp
                                                     <td class="px-3 py-2.5">
                                                         @if($log->metadata && is_array($log->metadata) && count($log->metadata) > 0)
                                                             <button @click="$el.nextElementSibling.classList.remove('hidden')" class="text-[10px] font-semibold text-[#007BFF] hover:underline">Ver</button>
                                                             <div class="hidden fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onclick="event.target===this&&this.classList.add('hidden')">
-                                                                <div class="bg-white rounded-xl shadow-xl border border-slate-200 p-3 min-w-[200px] max-w-xs max-h-80 overflow-y-auto">
+                                                                <div class="bg-white rounded-xl shadow-xl border border-slate-200 p-4 min-w-[240px] max-w-sm max-h-80 overflow-y-auto">
                                                                     <button onclick="this.closest('.fixed').classList.add('hidden')" class="float-right text-slate-400 hover:text-slate-600 text-sm leading-none">&times;</button>
-                                                                    <div class="space-y-1 mt-1">
+                                                                    <div class="space-y-2 mt-1">
                                                                         @foreach($log->metadata as $campo => $valor)
+                                                                            @php $etiqueta = $etiquetasCampos[$campo] ?? ucfirst(str_replace('_', ' ', $campo)); @endphp
                                                                             @if(is_array($valor) && isset($valor['old']) && isset($valor['new']))
-                                                                                <div class="flex items-start gap-1 text-[11px]">
-                                                                                    <span class="font-medium text-slate-600 shrink-0">{{ $campo }}:</span>
-                                                                                    <div class="flex flex-wrap items-center gap-0.5">
-                                                                                        <span class="line-through text-rose-500">{{ $valor['old'] ?? '' }}</span>
-                                                                                        <svg class="h-2.5 w-2.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                                                                                        <span class="text-emerald-600 font-medium">{{ $valor['new'] ?? '' }}</span>
+                                                                                <div class="text-[12px]">
+                                                                                    <span class="font-semibold text-slate-600 block mb-0.5">{{ $etiqueta }}</span>
+                                                                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                                                                        <span class="line-through text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded text-[11px]">{{ $formatearValor($valor['old'] ?? '') }}</span>
+                                                                                        <svg class="h-3 w-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                                                                        <span class="text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded text-[11px]">{{ $formatearValor($valor['new'] ?? '') }}</span>
                                                                                     </div>
                                                                                 </div>
-                                                                            @elseif(is_string($campo))
-                                                                                <div class="text-[11px] text-slate-500">
-                                                                                    <span class="font-medium text-slate-600">{{ $campo }}:</span>
-                                                                                    <span>{{ is_string($valor) ? $valor : json_encode($valor) }}</span>
+                                                                             @elseif(is_string($campo) && is_string($valor))
+                                                                                <div class="text-[12px]">
+                                                                                    <span class="font-semibold text-slate-600">{{ $etiqueta }}:</span>
+                                                                                    <span class="text-slate-500 ml-1">{{ $formatearValor($valor) }}</span>
                                                                                 </div>
-                                                                            @endif
+                                                                             @elseif(is_string($campo) && is_array($valor))
+                                                                                @php
+                                                                                    $totalItems = count($valor);
+                                                                                    $esNumerico = array_keys($valor) === range(0, $totalItems - 1);
+                                                                                @endphp
+                                                                                <div class="text-[12px]">
+                                                                                    <span class="font-semibold text-slate-600 block mb-0.5">{{ $etiqueta }}</span>
+                                                                                    @if($campo === 'pasos')
+                                                                                        <span class="text-slate-500 text-[11px]">{{ $totalItems }} paso(s) definido(s)</span>
+                                                                                        @if($totalItems > 0)
+                                                                                            <ul class="mt-1 space-y-0.5">
+                                                                                                @foreach($valor as $p)
+                                                                                                    <li class="text-[11px] text-slate-500 flex items-center gap-1">
+                                                                                                        <svg class="h-2.5 w-2.5 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7" /></svg>
+                                                                                                        {{ $p['nombre'] ?? 'Paso sin nombre' }}
+                                                                                                    </li>
+                                                                                                @endforeach
+                                                                                            </ul>
+                                                                                        @endif
+                                                                                    @elseif($campo === 'diseno')
+                                                                                        <div class="space-y-0.5 mt-0.5">
+                                                                                            @php $disenoLabels = ['version' => 'Versión', 'trigger_evento' => 'Evento disparador', 'trigger_descripcion' => 'Descripción', 'publicado' => 'Publicado']; @endphp
+                                                                                            @foreach($disenoLabels as $dk => $dl)
+                                                                                                @if(isset($valor[$dk]) && $valor[$dk] !== '')
+                                                                                                    <div class="text-[11px] text-slate-500">
+                                                                                                        <span class="font-medium text-slate-600">{{ $dl }}:</span>
+                                                                                                        <span class="ml-0.5">{{ $formatearValor($valor[$dk]) }}</span>
+                                                                                                    </div>
+                                                                                                @endif
+                                                                                            @endforeach
+                                                                                        </div>
+                                                                                    @elseif($esNumerico)
+                                                                                        <span class="text-slate-400 text-[11px]">{{ $totalItems }} elemento(s)</span>
+                                                                                    @else
+                                                                                        <span class="text-slate-400 text-[11px]">{{ $totalItems }} campo(s)</span>
+                                                                                    @endif
+                                                                                </div>
+                                                                             @endif
                                                                         @endforeach
                                                                     </div>
                                                                 </div>

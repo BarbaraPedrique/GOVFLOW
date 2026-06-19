@@ -131,7 +131,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-800">Línea de Tiempo del Flujo</h1>
-                    <p class="text-slate-500 text-sm">Monitoreo de estados, actores, actividades, reglas y rutas de transición.</p>
+                    <p class="text-slate-500 text-sm">Monitoreo de etapas, participantes, tareas, reglas y caminos de aprobación.</p>
                 </div>
                 <span x-show="selectedFlujo && flujoEstados[selectedFlujo]"
                       :class="{
@@ -262,8 +262,8 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-start">
                                 <div class="space-y-1">
-                                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total de Estados</span>
-                                    <h3 class="text-2xl font-bold text-slate-800">{{ $flujo->estados->count() }} Estados</h3>
+                                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total de Etapas</span>
+                                    <h3 class="text-2xl font-bold text-slate-800">{{ $flujo->estados->count() }} Etapas</h3>
                                 </div>
                                 <div class="p-2.5 bg-blue-50 text-[#007BFF] rounded-xl">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V16zM14 14a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" /></svg>
@@ -272,8 +272,8 @@
 
                             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-start">
                                 <div class="space-y-1">
-                                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Actores Involucrados</span>
-                                    <h3 class="text-2xl font-bold text-slate-800">{{ $flujo->estados->flatMap->actores->count() }} Actores</h3>
+                                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Participantes</span>
+                                    <h3 class="text-2xl font-bold text-slate-800">{{ $flujo->estados->flatMap->actores->count() }} Participantes</h3>
                                 </div>
                                 <div class="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
@@ -282,8 +282,8 @@
 
                             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-start">
                                 <div class="space-y-1">
-                                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Actividades Totales</span>
-                                    <h3 class="text-2xl font-bold text-slate-800">{{ $flujo->estados->flatMap->actividades->count() + $flujo->ejecuciones->sum('pasos_completados') }} Actividades</h3>
+                                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tareas Totales</span>
+                                    <h3 class="text-2xl font-bold text-slate-800">{{ $flujo->estados->flatMap->actividades->count() + $flujo->ejecuciones->sum('pasos_completados') }} Tareas</h3>
                                 </div>
                                 <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
@@ -389,7 +389,7 @@
                                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div x-data="{ open: true }" class="border border-slate-100 rounded-xl overflow-hidden">
                                                         <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hover:bg-slate-50 transition-colors">
-                                                            <span>Actores ({{ count($estado->actores ?? []) }})</span>
+                                                            <span>Participantes ({{ count($estado->actores ?? []) }})</span>
                                                             <svg class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7" /></svg>
                                                         </button>
                                                         <div x-show="open" x-collapse class="px-4 pb-3 space-y-2">
@@ -415,7 +415,7 @@
 
                                                     <div x-data="{ open: false }" class="border border-slate-100 rounded-xl overflow-hidden">
                                                         <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hover:bg-slate-50 transition-colors">
-                                                            <span>Actividades ({{ count($estado->actividades ?? []) }})</span>
+                                                            <span>Tareas ({{ count($estado->actividades ?? []) }})</span>
                                                             <svg class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7" /></svg>
                                                         </button>
                                                         <div x-show="open" x-collapse class="px-4 pb-3 space-y-2">
@@ -502,7 +502,7 @@
 
                                                 @if(count($estado->rutas ?? []) > 0)
                                                     <div class="mt-4 pt-4 border-t border-slate-100">
-                                                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-3">Rutas de Transición</span>
+                                                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-3">Caminos de aprobación</span>
                                                         <div class="flex flex-wrap gap-2">
                                                             @foreach($estado->rutas as $ruta)
                                                                 <div class="flex items-center gap-2 text-sm bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">

@@ -83,6 +83,8 @@ class FlujoEjecucionController extends Controller
 
         $ejecucion = FlujoEjecucion::create([
             'flujo_trabajo_id' => $flujo->id,
+            'flujo_codigo' => $flujo->codigo,
+            'flujo_nombre' => $flujo->nombre,
             'estado' => 'en_progreso',
             'paso_actual_index' => 0,
         ]);

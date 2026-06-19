@@ -90,21 +90,159 @@
                                 {{ $log->entidad_type }} <span class="text-slate-400">#{{ $log->entidad_id ?? '—' }}</span>
                             </td>
                             <td class="px-2 py-2.5 text-slate-600 truncate max-w-[250px]" title="{{ $log->descripcion }}">{{ $log->descripcion }}</td>
+                            @php
+                                $entidadLegible = match(true) {
+                                    str_contains($log->entidad_type, 'FlujoTrabajo') => 'Flujo de Trabajo',
+                                    str_contains($log->entidad_type, 'Tarea') => 'Tarea',
+                                    str_contains($log->entidad_type, 'User') => 'Usuario',
+                                    str_contains($log->entidad_type, 'Equipo') => 'Equipo',
+                                    str_contains($log->entidad_type, 'FlujoPaso') => 'Paso de Flujo',
+                                    str_contains($log->entidad_type, 'FlujoEjecucion') => 'Ejecución de Flujo',
+                                    str_contains($log->entidad_type, 'SolicitudCliente') => 'Solicitud',
+                                    default => $log->entidad_type,
+                                };
+                                $accionLegible = match($log->accion) {
+                                    'crear' => 'Creación',
+                                    'actualizar', 'update' => 'Actualización',
+                                    'eliminar', 'delete' => 'Eliminación',
+                                    'completar' => 'Finalización',
+                                    'reabrir' => 'Reapertura',
+                                    'asignar' => 'Asignación',
+                                    'rechazar' => 'Rechazo',
+                                    'aprobar' => 'Aprobación',
+                                    'iniciar' => 'Inicio',
+                                    'publicar' => 'Publicación',
+                                    'suspendido' => 'Suspensión',
+                                    default => $log->accion,
+                                };
+                                $etiquetasCampos = [
+                                    'nombre' => 'Nombre',
+                                    'descripcion' => 'Descripción',
+                                    'codigo' => 'Código',
+                                    'estado' => 'Estado',
+                                    'prioridad' => 'Prioridad',
+                                    'rol' => 'Rol',
+                                    'email' => 'Correo electrónico',
+                                    'fecha_inicio' => 'Fecha de inicio',
+                                    'fecha_fin' => 'Fecha de fin',
+                                    'equipo_id' => 'Equipo',
+                                    'checklist' => 'Lista de verificación',
+                                    'titulo' => 'Título',
+                                    'pasos' => 'Pasos del flujo',
+                                    'diseno' => 'Diseño del flujo',
+                                    'trigger_evento' => 'Evento disparador',
+                                    'trigger_descripcion' => 'Descripción del disparador',
+                                    'version' => 'Versión',
+                                ];
+                                $formatearValor = function($v) {
+                                    if ($v === null || $v === '') return '—';
+                                    if (in_array($v, ['activo','Activo'])) return 'Activo';
+                                    if (in_array($v, ['inactivo','Inactivo'])) return 'Inactivo';
+                                    if (in_array($v, ['pendiente','Pendiente'])) return 'Pendiente';
+                                    if (in_array($v, ['completado','Completado'])) return 'Completado';
+                                    if (in_array($v, ['en_progreso','en progreso','En progreso'])) return 'En progreso';
+                                    if (in_array($v, ['rechazado','Rechazado'])) return 'Rechazado';
+                                    if ($v === '1' || $v === 1) return 'Sí';
+                                    if ($v === '0' || $v === 0) return 'No';
+                                    return $v;
+                                };
+                            @endphp
                             <td class="px-2 py-2.5">
                                 <button onclick="this.nextElementSibling.classList.remove('hidden')" class="text-[10px] font-semibold text-[#007BFF] hover:underline">Ver</button>
                                 <div class="hidden fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onclick="event.target===this&&this.classList.add('hidden')">
-                                    <div class="bg-white rounded-xl shadow-xl border border-slate-200 p-3 min-w-[220px] max-w-sm max-h-80 overflow-y-auto">
+                                    <div class="bg-white rounded-xl shadow-xl border border-slate-200 p-4 min-w-[260px] max-w-sm max-h-96 overflow-y-auto">
                                         <button onclick="this.closest('.fixed').classList.add('hidden')" class="float-right text-slate-400 hover:text-slate-600 text-sm leading-none">&times;</button>
-                                        <div class="space-y-1.5 mt-1 text-xs">
-                                            <p><span class="font-semibold text-slate-600">Usuario:</span> {{ $log->user?->name ?? 'Sistema' }}</p>
-                                            <p><span class="font-semibold text-slate-600">Acción:</span> {{ $log->accion }}</p>
-                                            <p><span class="font-semibold text-slate-600">Entidad:</span> {{ $log->entidad_type }} #{{ $log->entidad_id ?? '—' }}</p>
-                                            <p><span class="font-semibold text-slate-600">Fecha:</span> {{ $log->created_at->isoFormat('DD/MM/YY HH:mm') }}</p>
-                                            <p><span class="font-semibold text-slate-600">IP:</span> {{ $log->ip_address ?? '—' }}</p>
-                                            <p><span class="font-semibold text-slate-600">Descripción:</span> {{ $log->descripcion }}</p>
-                                            @if($log->metadata)
-                                                <div><span class="font-semibold text-slate-600">Metadatos:</span>
-                                                    <pre class="text-[10px] text-slate-500 mt-0.5 bg-slate-50 p-1.5 rounded max-h-32 overflow-y-auto">{{ is_string($log->metadata) ? $log->metadata : json_encode($log->metadata, JSON_PRETTY_PRINT) }}</pre>
+                                        <div class="space-y-3 mt-1">
+                                            <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap
+                                                    @if(str_contains($log->accion, 'crear')) bg-blue-50 text-blue-700
+                                                    @elseif(str_contains($log->accion, 'completar')) bg-emerald-50 text-emerald-700
+                                                    @elseif(str_contains($log->accion, 'reabrir')) bg-amber-50 text-amber-700
+                                                    @elseif(str_contains($log->accion, 'eliminar')) bg-rose-50 text-rose-700
+                                                    @else bg-slate-50 text-slate-600
+                                                    @endif">
+                                                    {{ $accionLegible }}
+                                                </span>
+                                                <span class="text-[11px] text-slate-400">{{ $log->created_at->isoFormat('DD/MM/YY HH:mm') }}</span>
+                                            </div>
+                                            <div class="text-xs space-y-2">
+                                                <p><span class="font-semibold text-slate-600">Realizado por:</span> <span class="text-slate-700">{{ $log->user?->name ?? 'Sistema' }}</span></p>
+                                                <p><span class="font-semibold text-slate-600">Tipo de registro:</span> <span class="text-slate-700">{{ $entidadLegible }}</span></p>
+                                                <p><span class="font-semibold text-slate-600">Descripción:</span> <span class="text-slate-700">{{ $log->descripcion }}</span></p>
+                                            </div>
+                                            @if($log->metadata && is_array($log->metadata) && count($log->metadata) > 0)
+                                                <div class="pt-2 border-t border-slate-100">
+                                                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Cambios realizados</p>
+                                                    <div class="space-y-1.5">
+                                                        @foreach($log->metadata as $campo => $valor)
+                                                            @php $etiqueta = $etiquetasCampos[$campo] ?? ucfirst(str_replace('_', ' ', $campo)); @endphp
+                                                            @if(is_array($valor) && isset($valor['old']) && isset($valor['new']))
+                                                                <div class="text-[11px]">
+                                                                    <span class="font-semibold text-slate-600">{{ $etiqueta }}</span>
+                                                                    <div class="flex items-center gap-1 flex-wrap mt-0.5">
+                                                                        <span class="line-through text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded">{{ $formatearValor($valor['old'] ?? '') }}</span>
+                                                                        <svg class="h-2.5 w-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                                                        <span class="text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded">{{ $formatearValor($valor['new'] ?? '') }}</span>
+                                                                    </div>
+                                                                </div>
+                                                            @elseif(is_string($campo) && is_string($valor))
+                                                                <div class="text-[11px] text-slate-500">
+                                                                    <span class="font-semibold text-slate-600">{{ $etiqueta }}:</span>
+                                                                    <span class="ml-1">{{ $formatearValor($valor) }}</span>
+                                                                </div>
+                                                            @elseif(is_string($campo) && is_array($valor))
+                                                                @php
+                                                                    $totalItems = count($valor);
+                                                                    $esNumerico = array_keys($valor) === range(0, $totalItems - 1);
+                                                                @endphp
+                                                                <div class="text-[11px]">
+                                                                    <span class="font-semibold text-slate-600 block mb-0.5">{{ $etiqueta }}</span>
+                                                                    @if($campo === 'pasos')
+                                                                        <span class="text-slate-500">{{ $totalItems }} paso(s) definido(s)</span>
+                                                                        @if($totalItems > 0)
+                                                                            <ul class="mt-1 space-y-0.5">
+                                                                                @foreach($valor as $p)
+                                                                                    <li class="text-slate-500 flex items-center gap-1">
+                                                                                        <svg class="h-2.5 w-2.5 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7" /></svg>
+                                                                                        {{ $p['nombre'] ?? 'Paso sin nombre' }}
+                                                                                    </li>
+                                                                                @endforeach
+                                                                            </ul>
+                                                                        @endif
+                                                                    @elseif($campo === 'diseno')
+                                                                        <div class="space-y-0.5 mt-0.5">
+                                                                            @php $disenoLabels = ['version' => 'Versión', 'trigger_evento' => 'Evento disparador', 'trigger_descripcion' => 'Descripción', 'publicado' => 'Publicado']; @endphp
+                                                                            @foreach($disenoLabels as $dk => $dl)
+                                                                                @if(isset($valor[$dk]) && $valor[$dk] !== '')
+                                                                                    <div class="text-slate-500">
+                                                                                        <span class="font-medium text-slate-600">{{ $dl }}:</span>
+                                                                                        <span class="ml-0.5">{{ $formatearValor($valor[$dk]) }}</span>
+                                                                                    </div>
+                                                                                @endif
+                                                                            @endforeach
+                                                                        </div>
+                                                                    @elseif($esNumerico)
+                                                                        <span class="text-slate-400">{{ $totalItems }} elemento(s)</span>
+                                                                    @else
+                                                                        <span class="text-slate-400">{{ $totalItems }} campo(s)</span>
+                                                                    @endif
+                                                                </div>
+                                                            @endif
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
+                                            @if($log->ip_address || $log->user_agent)
+                                                <div class="pt-2 border-t border-slate-100">
+                                                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Información técnica</p>
+                                                    <div class="text-[10px] text-slate-400 space-y-0.5">
+                                                        @if($log->ip_address)
+                                                            <p><span class="font-medium">IP:</span> {{ $log->ip_address }}</p>
+                                                        @endif
+                                                        @if($log->user_agent)
+                                                            <p><span class="font-medium">Navegador:</span> <span class="break-all">{{ $log->user_agent }}</span></p>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             @endif
                                         </div>
