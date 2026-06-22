@@ -27,24 +27,24 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Count flows where user is participant (creator, executor, or reviewer)
-        $pasoIds = FlujoPasoEjecutor::query()->where('user_id', $user->id)
+        $pasoIds = FlujoPasoEjecutor::where('user_id', $user->id)
             ->pluck('flujo_paso_asignacion_id');
-        $flujoIdsComoRevisor = FlujoPasoAsignacion::query()->where('revisor_id', $user->id)
-            ->pluck('flujo_ejecucion_id');
-        $pasoIdsArr = $pasoIds->toArray();
-        $flujoIdsComoEjecutor = FlujoPasoAsignacion::query()->whereIn('id', $pasoIdsArr)
+        $flujoIdsComoRevisor = FlujoPasoAsignacion::where('revisor_id', $user->id)
             ->pluck('flujo_ejecucion_id');
 
-        $allIdsArr = $flujoIdsComoEjecutor->merge($flujoIdsComoRevisor)->toArray();
-        $flujoEjecucionQuery = FlujoEjecucion::query();
-        $flujoEjecucionQuery->whereIn('id', $allIdsArr);
-        $flujosTrabajoQuery = FlujoTrabajo::query()->where('user_id', $user->id)
-            ->orWhereIn('id', $flujoEjecucionQuery->pluck('flujo_trabajo_id'));
-        $misFlujos = $flujosTrabajoQuery->count();
+        $flujoIdsComoEjecutor = FlujoPasoAsignacion::whereIn('id', $pasoIds->toArray())
+            ->pluck('flujo_ejecucion_id');
 
-        $sessionQuery = UserSession::query()->whereNull('logged_out_at');
-        $usuariosActivos = $sessionQuery->where('logged_in_at', '>=', now()->subHours(24))
+        $allIds = $flujoIdsComoEjecutor->merge($flujoIdsComoRevisor);
+        $flujoEjecucionIds = FlujoEjecucion::whereIn('id', $allIds->toArray())
+            ->pluck('flujo_trabajo_id');
+
+        $misFlujos = FlujoTrabajo::where('user_id', $user->id)
+            ->orWhereIn('id', $flujoEjecucionIds->toArray())
+            ->count();
+
+        $usuariosActivos = UserSession::whereNull('logged_out_at')
+            ->where('logged_in_at', '>=', now()->subHours(24))
             ->distinct()
             ->count('user_id');
 
