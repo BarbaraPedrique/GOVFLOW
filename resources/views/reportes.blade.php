@@ -29,9 +29,13 @@
                                 <p class="text-sm font-semibold text-slate-800 leading-none">{{ Auth::user()->apodo ?? Auth::user()->name }}</p>
                                 <p class="text-[11px] text-slate-400 font-medium mt-0.5">{{ Auth::user()->role?->display_name ?? 'Sin rol' }}</p>
                             </div>
-                            <div class="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
-                                {{ strtoupper(substr(Auth::user()->apodo ?? Auth::user()->name, 0, 1)) }}
-                            </div>
+                            @if(Auth::user()->foto)
+                                <img src="{{ asset('storage/'.Auth::user()->foto) }}" class="h-9 w-9 rounded-full object-cover border border-slate-200 shadow-sm">
+                            @else
+                                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                                    {{ strtoupper(substr(Auth::user()->apodo ?? Auth::user()->name, 0, 1)) }}
+                                </div>
+                            @endif
                         </div>
                         <div x-show="open" @click.outside="open = false" @keydown.escape.window="open = false"
                              class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50"
