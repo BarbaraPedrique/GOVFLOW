@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FlujoEjecucion;
 use App\Models\FlujoPasoAsignacion;
 use App\Models\FlujoPasoEjecutor;
-use App\Models\FlujoTrabajo;
-use App\Models\Tarea;
 use App\Models\UserSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -27,41 +25,47 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $pasoIds = FlujoPasoEjecutor::where('user_id', $user->id)
+        $pasoIds = FlujoPasoEjecutor::whereUserId($user->id)
             ->pluck('flujo_paso_asignacion_id');
-        $flujoIdsComoRevisor = FlujoPasoAsignacion::where('revisor_id', $user->id)
+        $flujoIdsComoRevisor = FlujoPasoAsignacion::whereRevisorId($user->id)
             ->pluck('flujo_ejecucion_id');
 
-        $flujoIdsComoEjecutor = FlujoPasoAsignacion::whereIn('id', $pasoIds->toArray())
+        $flujoIdsComoEjecutor = DB::table('flujo_paso_asignaciones')
+            ->whereIn('id', $pasoIds->toArray())
             ->pluck('flujo_ejecucion_id');
 
         $allIds = $flujoIdsComoEjecutor->merge($flujoIdsComoRevisor);
-        $flujoEjecucionIds = FlujoEjecucion::whereIn('id', $allIds->toArray())
+        $flujoEjecucionIds = DB::table('flujo_ejecuciones')
+            ->whereIn('id', $allIds->toArray())
             ->pluck('flujo_trabajo_id');
 
-        $misFlujos = FlujoTrabajo::where('user_id', $user->id)
+        $misFlujos = DB::table('flujos_trabajo')
+            ->where('user_id', $user->id)
             ->orWhereIn('id', $flujoEjecucionIds->toArray())
             ->count();
 
-        $usuariosActivos = UserSession::whereNull('logged_out_at')
+        $usuariosActivos = DB::table('user_sessions')
+            ->whereNull('logged_out_at')
             ->where('logged_in_at', '>=', now()->subHours(24))
             ->distinct()
             ->count('user_id');
 
-        $tareasPersonales = Tarea::query()->where('user_id', $user->id)
+        $tareasPersonales = DB::table('tareas')
+            ->where('user_id', $user->id)
             ->where('completada', false)
             ->whereNull('completed_at')
             ->whereNotIn('categoria', ['Flujo', 'Solicitud'])
             ->count();
 
-        $tareasFlujo = Tarea::query()->where('user_id', $user->id)
+        $tareasFlujo = DB::table('tareas')
+            ->where('user_id', $user->id)
             ->where('completada', false)
             ->whereNull('completed_at')
             ->where('categoria', 'Flujo')
             ->count();
 
-        $sesionActual = UserSession::query()->where('user_id', $user->id)->whereNull('logged_out_at')->latest()->first();
-        $sesionAnterior = UserSession::query()->where('user_id', $user->id)->whereNotNull('logged_out_at')->latest()->first();
+        $sesionActual = UserSession::query()->where('user_id', $user->id)->whereNull('logged_out_at')->latest('id')->first();
+        $sesionAnterior = UserSession::query()->where('user_id', $user->id)->whereNotNull('logged_out_at')->latest('id')->first();
 
         $tiempoActivo = $sesionActual
             ? $this->formatearSegundos($sesionActual->logged_in_at->diffInSeconds(now()) - $sesionActual->activeBreakSeconds)
