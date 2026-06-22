@@ -40,10 +40,12 @@
                 <h1 class="text-2xl font-bold text-slate-800">Gestión de Equipos</h1>
                 <p class="text-slate-500 text-sm mt-1">Crea y administra equipos de trabajo con roles internos.</p>
             </div>
-            <a href="{{ route('equipos.create') }}" class="px-5 py-2.5 bg-[#007BFF] text-white text-sm font-semibold rounded-xl hover:bg-blue-600 transition-colors flex items-center gap-2">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4" /></svg>
-                Nuevo Equipo
-            </a>
+            @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador']))
+                <a href="{{ route('equipos.create') }}" class="px-5 py-2.5 bg-[#007BFF] text-white text-sm font-semibold rounded-xl hover:bg-blue-600 transition-colors flex items-center gap-2">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4" /></svg>
+                    Nuevo Equipo
+                </a>
+            @endif
         </div>
 
         @if($equipos->isEmpty())
@@ -65,15 +67,17 @@
                                     @endif
                                 </div>
                                 <div class="flex gap-1">
-                                    <a href="{{ route('equipos.edit', $equipo) }}" class="p-2 text-slate-400 hover:text-[#007BFF] rounded-lg hover:bg-slate-50 transition-colors" title="Editar">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.25 2.25 0 113.182 3.182L12 20.25l-4.5 1.5 1.5-4.5L18.586 3.586z" /></svg>
-                                    </a>
-                                    <form method="POST" action="{{ route('equipos.destroy', $equipo) }}" onsubmit="return confirm('¿Eliminar este equipo?')">
-                                        @csrf @method('DELETE')
-                                        <button class="p-2 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-50 transition-colors" title="Eliminar">
-                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                        </button>
-                                    </form>
+                                    @if(in_array(Auth::user()->role?->slug, ['super_admin', 'administrador']))
+                                        <a href="{{ route('equipos.edit', $equipo) }}" class="p-2 text-slate-400 hover:text-[#007BFF] rounded-lg hover:bg-slate-50 transition-colors" title="Editar">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.25 2.25 0 113.182 3.182L12 20.25l-4.5 1.5 1.5-4.5L18.586 3.586z" /></svg>
+                                        </a>
+                                        <form method="POST" action="{{ route('equipos.destroy', $equipo) }}" onsubmit="return confirm('¿Eliminar este equipo?')">
+                                            @csrf @method('DELETE')
+                                            <button class="p-2 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-50 transition-colors" title="Eliminar">
+                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </div>
 
