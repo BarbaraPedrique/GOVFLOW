@@ -22,7 +22,7 @@ class EquipoController extends Controller
 
     public function index(): View
     {
-        $equipos = Equipo::with(['gerente', 'miembros'])->orderByDesc('id')->get();
+        $equipos = Equipo::query()->with(['gerente', 'miembros'])->orderByDesc('id')->get();
         return view('equipos.index', compact('equipos'));
     }
 
@@ -31,11 +31,11 @@ class EquipoController extends Controller
         $this->authorizeAdmin($request);
 
         $equipo = null;
-        $gerentes = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
-        $admins = User::whereHas('role', fn($q) => $q->whereIn('slug', ['administrador', 'super_admin']))->orderBy('name')->get();
-        $gerentesEquipo = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
-        $lideres = User::whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo']))->orderBy('name')->get();
-        $empleados = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado']))->orderBy('name')->get();
+        $gerentes = User::query()->whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
+        $admins = User::query()->whereHas('role', fn($q) => $q->whereIn('slug', ['administrador', 'super_admin']))->orderBy('name')->get();
+        $gerentesEquipo = User::query()->whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
+        $lideres = User::query()->whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo']))->orderBy('name')->get();
+        $empleados = User::query()->whereHas('role', fn($q) => $q->whereIn('slug', ['empleado']))->orderBy('name')->get();
 
         return view('equipos.form', compact('equipo', 'gerentes', 'admins', 'gerentesEquipo', 'lideres', 'empleados'));
     }
@@ -115,11 +115,11 @@ class EquipoController extends Controller
     {
         $this->authorizeAdmin($request);
 
-        $gerentes = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
-        $admins = User::whereHas('role', fn($q) => $q->whereIn('slug', ['administrador', 'super_admin']))->orderBy('name')->get();
-        $gerentesEquipo = User::whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
-        $lideres = User::whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo']))->orderBy('name')->get();
-        $empleados = User::whereHas('role', fn($q) => $q->whereIn('slug', ['empleado']))->orderBy('name')->get();
+        $gerentes = User::query()->whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
+        $admins = User::query()->whereHas('role', fn($q) => $q->whereIn('slug', ['administrador', 'super_admin']))->orderBy('name')->get();
+        $gerentesEquipo = User::query()->whereHas('role', fn($q) => $q->whereIn('slug', ['gerente']))->orderBy('name')->get();
+        $lideres = User::query()->whereHas('role', fn($q) => $q->whereIn('slug', ['lider_equipo']))->orderBy('name')->get();
+        $empleados = User::query()->whereHas('role', fn($q) => $q->whereIn('slug', ['empleado']))->orderBy('name')->get();
 
         $equipo->load('miembros');
 

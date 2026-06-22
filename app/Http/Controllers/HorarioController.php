@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Horario;
 use App\Models\Tarea;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -13,8 +15,8 @@ class HorarioController extends Controller
 {
     public function index(): View
     {
-        $horarios = Horario::where('user_id', auth()->id())->get();
-        $tareas = Tarea::where('user_id', auth()->id())
+        $horarios = DB::table('horarios')->where('user_id', Auth::id())->get();
+        $tareas = DB::table('tareas')->where('user_id', Auth::id())
             ->where('completada', false)
             ->whereNull('completed_at')
             ->whereNotNull('fecha_vencimiento')
@@ -65,14 +67,14 @@ class HorarioController extends Controller
             'ubicacion' => 'nullable|string|max:255',
         ]);
 
-        $userId = auth()->id();
+        $userId = Auth::id();
         $data['user_id'] = $userId;
         $horario = Horario::create($data);
 
         $monday = now()->startOfWeek();
         $fechaVencimiento = $monday->copy()->addDays((int) $data['dia_semana']);
 
-        $exists = Tarea::where('user_id', $userId)
+        $exists = DB::table('tareas')->where('user_id', $userId)
             ->where('titulo', $data['titulo'])
             ->whereDate('fecha_vencimiento', $fechaVencimiento)
             ->exists();
@@ -84,7 +86,7 @@ class HorarioController extends Controller
                 'prioridad' => 'media',
                 'categoria' => 'Horario',
                 'fecha_vencimiento' => $fechaVencimiento,
-                'orden' => (Tarea::where('user_id', $userId)->max('orden') ?? 0) + 1,
+                'orden' => (DB::table('tareas')->where('user_id', $userId)->max('orden') ?? 0) + 1,
             ]);
         }
 
@@ -93,7 +95,7 @@ class HorarioController extends Controller
 
     public function update(Request $request, Horario $horario): JsonResponse
     {
-        if ($horario->user_id !== auth()->id()) abort(403);
+        if ($horario->user_id !== Auth::id()) abort(403);
 
         $horario->update($request->validate([
             'dia_semana' => 'integer|between:0,6',
@@ -109,13 +111,13 @@ class HorarioController extends Controller
 
     public function destroy(Horario $horario): JsonResponse
     {
-        if ($horario->user_id !== auth()->id()) abort(403);
+        if ($horario->user_id !== Auth::id()) abort(403);
 
-        $userId = auth()->id();
+        $userId = Auth::id();
         $monday = now()->startOfWeek();
         $fechaVencimiento = $monday->copy()->addDays((int) $horario->dia_semana);
 
-        Tarea::where('user_id', $userId)
+        DB::table('tareas')->where('user_id', $userId)
             ->where('titulo', $horario->titulo)
             ->whereDate('fecha_vencimiento', $fechaVencimiento)
             ->where('categoria', 'Horario')

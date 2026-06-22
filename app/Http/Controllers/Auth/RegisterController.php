@@ -34,7 +34,7 @@ class RegisterController extends Controller
             'password.confirmed'  => 'Las contraseñas no coinciden.',
         ]);
 
-        $roleModel = Role::where('slug', $request->role)->firstOrFail();
+        $roleModel = Role::query()->where('slug', $request->role)->firstOrFail();
 
         $user = User::create([
             'name'     => $request->name,
@@ -48,7 +48,7 @@ class RegisterController extends Controller
         $titulo = "{$request->name} solicitó ({$roleDisplay})";
         $descripcion = "user_id:{$user->id}|rol:{$roleDisplay}";
 
-        $superAdmins = User::whereHas('role', fn($q) => $q->where('slug', 'super_admin'))->get();
+        $superAdmins = User::query()->whereHas('role', fn($q) => $q->where('slug', 'super_admin'))->get();
 
         foreach ($superAdmins as $admin) {
             Notificacion::create([

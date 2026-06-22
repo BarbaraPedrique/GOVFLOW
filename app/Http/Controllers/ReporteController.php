@@ -61,7 +61,7 @@ class ReporteController extends Controller
 
     private function recopilarDatos(Carbon $inicio, Carbon $fin): array
     {
-        $flujosCreados = LogAuditoria::query()
+        $flujosCreados = DB::table('logs_auditoria')
             ->where('accion', 'crear')
             ->where(function ($q) {
                 $q->where('entidad_type', 'App\Models\FlujoTrabajo')
@@ -70,7 +70,7 @@ class ReporteController extends Controller
             ->whereBetween('created_at', [$inicio, $fin])
             ->count();
 
-        $flujosCompletados = FlujoEjecucion::query()
+        $flujosCompletados = DB::table('flujo_ejecuciones')
             ->where('estado', 'completada')
             ->whereBetween('updated_at', [$inicio, $fin])
             ->count();
@@ -89,7 +89,7 @@ class ReporteController extends Controller
             ->get();
 
         $detalleFlujos = $flujosEnPeriodo->map(function ($flujo) {
-            $pasos = FlujoPasoAsignacion::query()
+            $pasos = DB::table('flujo_paso_asignaciones')
                 ->where('flujo_ejecucion_id', $flujo->id)
                 ->get();
 
@@ -127,41 +127,41 @@ class ReporteController extends Controller
             ->distinct('flujo_paso_ejecutores.user_id')
             ->count('flujo_paso_ejecutores.user_id');
 
-        $modificaciones = LogAuditoria::query()->whereBetween('created_at', [$inicio, $fin])->count();
+        $modificaciones = DB::table('logs_auditoria')->whereBetween('created_at', [$inicio, $fin])->count();
 
-        $nuevosIngresos = User::query()->whereBetween('created_at', [$inicio, $fin])->count();
+        $nuevosIngresos = DB::table('users')->whereBetween('created_at', [$inicio, $fin])->count();
 
-        $empleadosEliminados = LogAuditoria::query()
+        $empleadosEliminados = DB::table('logs_auditoria')
             ->where('accion', 'eliminar_usuario')
             ->whereBetween('created_at', [$inicio, $fin])
             ->count();
 
-        $flujosEliminados = LogAuditoria::query()
+        $flujosEliminados = DB::table('logs_auditoria')
             ->where('accion', 'eliminar_flujo')
             ->whereBetween('created_at', [$inicio, $fin])
             ->count();
 
-        $cambiosRoles = RoleHistorial::query()
+        $cambiosRoles = DB::table('role_historials')
             ->whereBetween('asignado_en', [$inicio, $fin])
             ->count();
 
-        $solicitudes = Tarea::query()
+        $solicitudes = DB::table('tareas')
             ->where('categoria', 'Solicitud')
             ->whereBetween('created_at', [$inicio, $fin])
             ->count();
 
-        $registrosPendientes = User::query()
+        $registrosPendientes = DB::table('users')
             ->where('status', 'pendiente')
             ->whereBetween('created_at', [$inicio, $fin])
             ->count();
 
         $equipos = Equipo::query()->withCount('miembros')->get()->map(function ($equipo) use ($inicio, $fin) {
-            $tareasCompletadas = Tarea::query()
+            $tareasCompletadas = DB::table('tareas')
                 ->where('equipo_id', $equipo->id)
                 ->where('completada', true)
                 ->whereBetween('completed_at', [$inicio, $fin])
                 ->count();
-            $tareasPendientes = Tarea::query()
+            $tareasPendientes = DB::table('tareas')
                 ->where('equipo_id', $equipo->id)
                 ->where('completada', false)
                 ->whereNull('completed_at')
@@ -263,17 +263,17 @@ class ReporteController extends Controller
                 $semFin = (clone $inicio)->addWeeks($i)->subDay();
                 if ($semFin->gt($fin)) $semFin = clone $fin;
 
-                $flujosSem = FlujoEjecucion::query()
+                $flujosSem = DB::table('flujo_ejecuciones')
                     ->where('estado', 'completada')
                     ->whereBetween('updated_at', [$semInicio, $semFin])
                     ->count();
 
-                $tareasSem = Tarea::query()
+                $tareasSem = DB::table('tareas')
                     ->where('completada', true)
                     ->whereBetween('completed_at', [$semInicio, $semFin])
                     ->count();
 
-                $totalTareasSem = Tarea::query()
+                $totalTareasSem = DB::table('tareas')
                     ->whereBetween('created_at', [$semInicio, $semFin])
                     ->count();
 

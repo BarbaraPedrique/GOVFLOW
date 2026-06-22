@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Notificacion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class NotificacionController extends Controller
 {
     public function index()
     {
-        $notificaciones = Notificacion::where('user_id', auth()->id())
+        $notificaciones = Notificacion::query()->where('user_id', Auth::id())
             ->recientes()
             ->limit(20)
             ->get();
@@ -29,7 +31,7 @@ class NotificacionController extends Controller
 
     public function marcarLeido(Notificacion $notificacion): JsonResponse
     {
-        if ($notificacion->user_id !== auth()->id()) {
+        if ($notificacion->user_id !== Auth::id()) {
             abort(403);
         }
         $notificacion->update(['leido' => true]);
@@ -38,7 +40,7 @@ class NotificacionController extends Controller
 
     public function marcarTodasLeido(): JsonResponse
     {
-        Notificacion::where('user_id', auth()->id())
+        DB::table('notificaciones')->where('user_id', Auth::id())
             ->where('leido', false)
             ->update(['leido' => true]);
         return response()->json(['success' => true]);

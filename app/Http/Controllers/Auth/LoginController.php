@@ -54,7 +54,7 @@ class LoginController extends Controller
     {
         $user = Auth::user();
         if ($user) {
-            $session = UserSession::where('user_id', $user->id)->whereNull('logged_out_at')->latest()->first();
+            $session = UserSession::query()->where('user_id', $user->id)->whereNull('logged_out_at')->latest()->first();
             if ($session) {
                 $session->breaks()->whereNull('break_end')->update(['break_end' => now()]);
                 $session->update(['logged_out_at' => now()]);

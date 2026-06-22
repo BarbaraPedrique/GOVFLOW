@@ -6,6 +6,7 @@ use App\Models\FlujoTrabajo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\View\View;
@@ -62,13 +63,13 @@ class ProfileController extends Controller
 
         $equipos = $user->equiposDirigidos->merge($user->equipos)->unique('id');
         $equipos->loadMissing(['miembros', 'gerente']);
-        $completados = FlujoTrabajo::where('user_id', $user->id)
+        $completados = DB::table('flujos_trabajo')->where('user_id', $user->id)
             ->where('estado', 'Completado')
             ->whereNotNull('fecha_completado')
             ->orderByDesc('fecha_completado')
             ->get();
 
-        $eficienciaMensual = FlujoTrabajo::where('user_id', $user->id)
+        $eficienciaMensual = DB::table('flujos_trabajo')->where('user_id', $user->id)
             ->whereNotNull('fecha_completado')
             ->whereNotNull('fecha_limite')
             ->selectRaw("DATE_FORMAT(fecha_completado, '%Y-%m') as mes")

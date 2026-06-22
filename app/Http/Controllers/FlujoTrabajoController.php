@@ -37,8 +37,8 @@ class FlujoTrabajoController extends Controller
     public function create()
     {
         $equipos = Auth::user()->role?->slug === 'super_admin'
-            ? Equipo::orderBy('nombre')->get()
-            : Equipo::orderBy('nombre')->get();
+            ? DB::table('equipos')->orderBy('nombre')->get()
+            : DB::table('equipos')->orderBy('nombre')->get();
 
         return view('flujos.create', compact('equipos'));
     }
@@ -92,8 +92,8 @@ class FlujoTrabajoController extends Controller
     public function edit(FlujoTrabajo $flujos_trabajo)
     {
         $equipos = Auth::user()->role?->slug === 'super_admin'
-            ? Equipo::orderBy('nombre')->get()
-            : Equipo::orderBy('nombre')->get();
+            ? DB::table('equipos')->orderBy('nombre')->get()
+            : DB::table('equipos')->orderBy('nombre')->get();
 
         return view('flujos.edit', compact('flujos_trabajo', 'equipos'));
     }
@@ -166,10 +166,10 @@ class FlujoTrabajoController extends Controller
         $verMios = $request->filled('ver') && $request->ver === 'mios';
 
         $equipos = $esSuperAdmin
-            ? Equipo::orderBy('nombre')->get()
+            ? DB::table('equipos')->orderBy('nombre')->get()
             : $user->equipos()->orderBy('nombre')->get();
 
-        $query = FlujoTrabajo::with('estados', 'user', 'equipo')
+        $query = FlujoTrabajo::query()->with('estados', 'user', 'equipo')
             ->with(['ejecuciones' => function ($q) {
                 $q->withCount(['pasos as pasos_completados' => fn($qq) => $qq->where('estado', 'completado')]);
             }]);
@@ -179,12 +179,12 @@ class FlujoTrabajoController extends Controller
         }
 
         if (!$esSuperAdmin) {
-            $flujoRelIds = FlujoPasoAsignacion::where(function ($q) use ($user) {
+            $flujoRelIds = FlujoPasoAsignacion::query()->where(function ($q) use ($user) {
                     $q->whereHas('ejecutores', fn($qq) => $qq->where('user_id', $user->id))
                       ->orWhere('revisor_id', $user->id);
                 })
                 ->pluck('flujo_ejecucion_id')
-                ->pipe(fn($ids) => FlujoEjecucion::whereIn('id', $ids)->pluck('flujo_trabajo_id'))
+                ->pipe(fn($ids) => DB::table('flujo_ejecuciones')->whereIn('id', $ids)->pluck('flujo_trabajo_id'))
                 ->unique()
                 ->toArray();
 
@@ -193,7 +193,7 @@ class FlujoTrabajoController extends Controller
 
         $flujos = $query->orderByDesc('id')->get();
 
-        $misPasosPendientes = FlujoPasoAsignacion::whereHas('ejecutores', function ($q) use ($user) {
+        $misPasosPendientes = FlujoPasoAsignacion::query()->whereHas('ejecutores', function ($q) use ($user) {
                 $q->where('user_id', $user->id)->where('estado', 'pendiente');
             })
             ->whereIn('estado', ['pendiente', 'en_progreso'])
@@ -206,7 +206,7 @@ class FlujoTrabajoController extends Controller
         $pasoCounts = null;
         if ($verMios) {
             $flujoIds = $flujos->pluck('id');
-            $pasoCounts = FlujoPasoAsignacion::whereHas('ejecucion', fn($q) => $q->whereIn('flujo_trabajo_id', $flujoIds))
+            $pasoCounts = FlujoPasoAsignacion::query()->whereHas('ejecucion', fn($q) => $q->whereIn('flujo_trabajo_id', $flujoIds))
                 ->whereHas('ejecutores', fn($q) => $q->where('user_id', $user->id))
                 ->selectRaw('flujo_ejecucion_id, COUNT(*) as total, SUM(CASE WHEN estado = ? THEN 1 ELSE 0 END) as completados', ['completado'])
                 ->groupBy('flujo_ejecucion_id')
@@ -234,11 +234,11 @@ class FlujoTrabajoController extends Controller
                 }
             }
             $pasoUsuarios = $userIds->unique()->isNotEmpty()
-                ? User::whereIn('id', $userIds->unique())->get()->keyBy('id')
+                ? DB::table('users')->whereIn('id', $userIds->unique())->get()->keyBy('id')
                 : collect();
         }
 
-        $pendientesRevision = FlujoPasoAsignacion::where('revisor_id', $user->id)
+        $pendientesRevision = FlujoPasoAsignacion::query()->where('revisor_id', $user->id)
             ->where('revision_estado', 'en_revision')
             ->when($request->filled('equipo_id'), function ($q) use ($request) {
                 $q->whereHas('ejecucion.flujoTrabajo', fn($qq) => $qq->where('equipo_id', $request->equipo_id));

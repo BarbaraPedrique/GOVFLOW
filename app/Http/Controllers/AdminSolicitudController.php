@@ -34,7 +34,7 @@ class AdminSolicitudController extends Controller
         DB::transaction(function () use ($user) {
             $user->update(['status' => User::STATUS_ACTIVO]);
 
-            Tarea::query()->where('categoria', 'Solicitud')
+            DB::table('tareas')->where('categoria', 'Solicitud')
                 ->where('descripcion', 'like', "%user_id:{$user->id}%")
                 ->update(['completada' => true, 'status' => 'aprobado']);
 
@@ -67,7 +67,7 @@ class AdminSolicitudController extends Controller
 
         DB::beginTransaction();
         try {
-            Tarea::query()->where('categoria', 'Solicitud')
+            DB::table('tareas')->where('categoria', 'Solicitud')
                 ->where('descripcion', 'like', "%user_id:{$user->id}%")
                 ->update(['completada' => true, 'status' => 'rechazado']);
             User::destroy($user->id);
@@ -126,7 +126,7 @@ class AdminSolicitudController extends Controller
             return response()->json(['success' => false, 'error' => 'No se pudo identificar el usuario.']);
         }
 
-        $user = User::query()->find($userId);
+        $user = DB::table('users')->where('id', $userId)->first();
 
         if (!$user || $user->status !== User::STATUS_PENDIENTE) {
             return response()->json(['success' => false, 'error' => 'Usuario no encontrado o ya procesado.']);

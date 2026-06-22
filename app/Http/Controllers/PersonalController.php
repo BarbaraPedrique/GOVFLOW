@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class PersonalController extends Controller
@@ -27,7 +28,7 @@ class PersonalController extends Controller
     {
         $this->autorizar();
 
-        $base = User::with(['role', 'equipos', 'roleHistorial.role', 'tareas', 'sessions.breaks'])
+        $base = User::query()->with(['role', 'equipos', 'roleHistorial.role', 'tareas', 'sessions.breaks'])
             ->where('status', '!=', 'pendiente');
 
         if ($request->filled('role_id')) {
@@ -107,8 +108,8 @@ class PersonalController extends Controller
             'rendimientoPromedio' => $allUsers->avg(fn($p) => $p->tareas->count() > 0 ? round(($p->tareas->where('completada', true)->count() / $p->tareas->count()) * 100) : 0),
         ];
 
-        $roles = Role::whereNotIn('slug', ['super_admin'])->orderBy('name')->get();
-        $equipos = Equipo::orderBy('nombre')->get();
+        $roles = DB::table('roles')->whereNotIn('slug', ['super_admin'])->orderBy('name')->get();
+        $equipos = DB::table('equipos')->orderBy('nombre')->get();
 
         return view('personal.index', compact('personal', 'stats', 'roles', 'equipos'));
     }
@@ -211,7 +212,7 @@ class PersonalController extends Controller
         if ($request->filled('equipo_id')) {
             $user->equipos()->attach($request->equipo_id, ['rol' => $request->rol_equipo]);
 
-            $equipo = Equipo::find($request->equipo_id);
+            $equipo = Equipo::query()->find($request->equipo_id);
             Notificacion::create([
                 'user_id' => $user->id,
                 'tipo' => 'equipo_asignado',

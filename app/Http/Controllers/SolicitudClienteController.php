@@ -10,6 +10,7 @@ use App\Models\Tarea;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class SolicitudClienteController extends Controller
 {
@@ -39,28 +40,28 @@ class SolicitudClienteController extends Controller
         $descripcion .= "\nSolicitante: " . $user->name . ' (' . $user->email . ')';
 
         if ($request->tipo === 'unirse_equipo' && $request->equipo_id) {
-            $equipo = Equipo::find($request->equipo_id);
+            $equipo = Equipo::query()->find($request->equipo_id);
             $descripcion .= "\nEquipo: " . ($equipo?->nombre ?? 'N/A');
         }
 
         $recipients = collect();
 
         if ($request->tipo === 'unirse_equipo') {
-            $recipients = User::where('role_id', '<=', 3)
+            $recipients = DB::table('users')->where('role_id', '<=', 3)
                 ->where('id', '!=', $user->id)
                 ->get();
             if ($request->equipo_id) {
-                $equipo = Equipo::find($request->equipo_id);
+                $equipo = Equipo::query()->find($request->equipo_id);
                 if ($equipo && $equipo->gerente && !$recipients->contains('id', $equipo->gerente_id)) {
                     $recipients->push($equipo->gerente);
                 }
             }
         } elseif ($request->tipo === 'revision_tareas') {
-            $recipients = User::where('role_id', '<=', 4)
+            $recipients = DB::table('users')->where('role_id', '<=', 4)
                 ->where('id', '!=', $user->id)
                 ->get();
         } else {
-            $recipients = User::where('role_id', 1)->get();
+            $recipients = DB::table('users')->where('role_id', 1)->get();
         }
 
         $created = 0;
@@ -100,22 +101,22 @@ class SolicitudClienteController extends Controller
     {
         $user = Auth::user();
 
-        $pendientes = Tarea::where('user_id', $user->id)
+        $pendientes = DB::table('tareas')->where('user_id', $user->id)
             ->where('categoria', 'Solicitud')
             ->where('status', 'pendiente')
             ->where('completada', false)
             ->orderByDesc('created_at')
             ->get();
 
-        $historial = Tarea::where('user_id', $user->id)
+        $historial = DB::table('tareas')->where('user_id', $user->id)
             ->where('categoria', 'Solicitud')
             ->whereIn('status', ['aprobado', 'rechazado'])
             ->orderByDesc('created_at')
             ->get();
 
-        $equiposDisponibles = Equipo::all();
+        $equiposDisponibles = Equipo::query()->all();
 
-        $revisionesFlujo = FlujoPasoAsignacion::where('revisor_id', $user->id)
+        $revisionesFlujo = FlujoPasoAsignacion::query()->where('revisor_id', $user->id)
             ->where('revision_estado', 'en_revision')
             ->with(['ejecucion.flujoTrabajo'])
             ->get();
@@ -123,11 +124,11 @@ class SolicitudClienteController extends Controller
         $registrosPendientes = collect();
         $registrosHistorial = collect();
         if ($user->role?->slug === 'super_admin') {
-            $registrosPendientes = User::where('status', User::STATUS_PENDIENTE)
+            $registrosPendientes = DB::table('users')->where('status', User::STATUS_PENDIENTE)
                 ->orderByDesc('created_at')
                 ->get();
 
-            $tareasRegistro = Tarea::where('categoria', 'Solicitud')
+            $tareasRegistro = DB::table('tareas')->where('categoria', 'Solicitud')
                 ->where('descripcion', 'like', 'user_id:%')
                 ->whereIn('status', ['aprobado', 'rechazado'])
                 ->orderByDesc('updated_at')
@@ -153,7 +154,7 @@ class SolicitudClienteController extends Controller
 
         preg_match('/Solicitante: (.+?) \(/', $tarea->descripcion, $matches);
         if (!empty($matches[1])) {
-            $solicitante = User::where('name', $matches[1])->first();
+            $solicitante = DB::table('users')->where('name', $matches[1])->first();
             if ($solicitante) {
                 Notificacion::create([
                     'user_id' => $solicitante->id,
@@ -184,7 +185,7 @@ class SolicitudClienteController extends Controller
 
         $equipoSugerido = null;
         if ($request->filled('equipo_sugerido_id')) {
-            $equipoSugerido = Equipo::find($request->equipo_sugerido_id);
+            $equipoSugerido = Equipo::query()->find($request->equipo_sugerido_id);
         }
 
         $tarea->update(['completada' => true, 'status' => 'rechazado']);
@@ -196,7 +197,7 @@ class SolicitudClienteController extends Controller
         $equipoOriginal = $eqMatches[1] ?? '';
 
         if (!empty($matches[1])) {
-            $solicitante = User::where('name', $matches[1])->first();
+            $solicitante = DB::table('users')->where('name', $matches[1])->first();
             if ($solicitante) {
                 $mensaje = "Tu solicitud \"{$tarea->titulo}\" ha sido rechazada.";
                 if ($equipoSugerido) {

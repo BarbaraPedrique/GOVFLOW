@@ -8,6 +8,8 @@ use App\Models\LogAuditoria;
 use App\Models\Notificacion;
 use App\Models\Tarea;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -16,7 +18,7 @@ class TareaController extends Controller
 {
     public function index(): View
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $equipos = collect();
         $historialLimite = now()->subDays(7);
 
@@ -27,25 +29,25 @@ class TareaController extends Controller
         };
 
         if (in_array($user->role?->slug, ['super_admin', 'administrador'])) {
-            $tareas = Tarea::where('user_id', $user->id)->where($baseQuery)->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
-            $equipos = Equipo::orderBy('nombre')->get();
+            $tareas = Tarea::query()->where('user_id', $user->id)->where($baseQuery)->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
+            $equipos = DB::table('equipos')->orderBy('nombre')->get();
         } elseif ($user->role?->slug === 'gerente') {
             $equipoIds = $user->equiposDirigidos()->pluck('id');
-            $tareas = Tarea::where(function($q) use ($equipoIds, $user) {
+            $tareas = Tarea::query()->where(function($q) use ($equipoIds, $user) {
                     $q->whereIn('equipo_id', $equipoIds)->orWhere('user_id', $user->id);
                 })->where($baseQuery)
                 ->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
             $equipos = $user->equiposDirigidos;
         } elseif ($user->role?->slug === 'lider_equipo') {
             $equipoIds = $user->equiposComoLider()->pluck('equipo_id');
-            $tareas = Tarea::where(function($q) use ($equipoIds, $user) {
+            $tareas = Tarea::query()->where(function($q) use ($equipoIds, $user) {
                     $q->whereIn('equipo_id', $equipoIds)->orWhere('user_id', $user->id);
                 })->where($baseQuery)
                 ->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
             $equipos = $user->equiposComoLider;
         } else {
             $equipoIds = $user->equiposComoEmpleado()->pluck('equipo_id');
-            $tareas = Tarea::where(function($q) use ($equipoIds, $user) {
+            $tareas = Tarea::query()->where(function($q) use ($equipoIds, $user) {
                     $q->whereIn('equipo_id', $equipoIds)->orWhere('user_id', $user->id);
                 })->where($baseQuery)
                 ->with('equipo')->porPrioridad()->get()->groupBy('prioridad');
@@ -57,7 +59,7 @@ class TareaController extends Controller
 
     public function store(Request $request): RedirectResponse|JsonResponse
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $esAdmin = in_array($user->role?->slug, ['super_admin', 'administrador']);
 
         $rules = [
@@ -81,14 +83,14 @@ class TareaController extends Controller
             }
         }
 
-        $maxOrden = Tarea::where('user_id', auth()->id())->max('orden') ?? 0;
-        $data['user_id'] = auth()->id();
+        $maxOrden = DB::table('tareas')->where('user_id', Auth::id())->max('orden') ?? 0;
+        $data['user_id'] = Auth::id();
         $data['orden'] = $maxOrden + 1;
 
         $tarea = Tarea::create($data);
 
         Notificacion::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'tipo' => 'tarea_creada',
             'titulo' => 'Nueva tarea',
             'mensaje' => "Tarea '{$tarea->titulo}' creada con prioridad {$tarea->prioridad}",
@@ -114,7 +116,7 @@ class TareaController extends Controller
 
     public function update(Request $request, Tarea $tarea): JsonResponse
     {
-        $user = auth()->user();
+        $user = Auth::user();
         if ($tarea->user_id !== $user->id && !in_array($user->role?->slug, ['super_admin', 'administrador'])) abort(403);
 
         if ($request->has('completada')) {
@@ -158,7 +160,7 @@ class TareaController extends Controller
 
     public function destroy(Tarea $tarea): JsonResponse
     {
-        $user = auth()->user();
+        $user = Auth::user();
         if ($tarea->user_id !== $user->id && !in_array($user->role?->slug, ['super_admin', 'administrador'])) abort(403);
 
         Tarea::destroy($tarea->id);
@@ -174,7 +176,7 @@ class TareaController extends Controller
         ]);
 
         foreach ($ordenes['ordenes'] as $item) {
-            Tarea::where('id', $item['id'])->where('user_id', auth()->id())
+            DB::table('tareas')->where('id', $item['id'])->where('user_id', Auth::id())
                 ->update(['orden' => $item['orden']]);
         }
 

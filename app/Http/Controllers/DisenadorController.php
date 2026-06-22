@@ -21,9 +21,9 @@ class DisenadorController extends Controller
             abort(403, 'No tienes permiso para acceder al Diseñador.');
         }
 
-        $flujos = FlujoTrabajo::with('estados')->orderByDesc('id')->get();
+        $flujos = FlujoTrabajo::query()->with('estados')->orderByDesc('id')->get();
 
-        $equipos = Equipo::with('miembros.role')->orderBy('nombre')->get();
+        $equipos = Equipo::query()->with('miembros.role')->orderBy('nombre')->get();
         $equiposData = $equipos->mapWithKeys(fn($e) => [$e->id => $e->miembros->map(fn($m) => [
             'id' => $m->id,
             'name' => $m->name,

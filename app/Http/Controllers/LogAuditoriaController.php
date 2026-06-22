@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LogAuditoria;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class LogAuditoriaController extends Controller
@@ -16,7 +17,7 @@ class LogAuditoriaController extends Controller
             abort(403, 'No tienes permiso para acceder a esta sección.');
         }
 
-        $query = LogAuditoria::with('user')->orderByDesc('created_at');
+        $query = LogAuditoria::query()->with('user')->orderByDesc('created_at');
 
         if ($request->filled('accion')) {
             $query->where('accion', $request->accion);
@@ -26,8 +27,8 @@ class LogAuditoriaController extends Controller
         }
 
         $logs = $query->paginate(25);
-        $acciones = LogAuditoria::select('accion')->distinct()->pluck('accion');
-        $entidades = LogAuditoria::select('entidad_type')->distinct()->pluck('entidad_type');
+        $acciones = DB::table('logs_auditoria')->select('accion')->distinct()->pluck('accion');
+        $entidades = DB::table('logs_auditoria')->select('entidad_type')->distinct()->pluck('entidad_type');
 
         return view('logs_auditoria', compact('logs', 'acciones', 'entidades'));
     }
