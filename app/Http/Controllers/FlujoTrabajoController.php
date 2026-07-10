@@ -171,7 +171,8 @@ class FlujoTrabajoController extends Controller
 
         $query = FlujoTrabajo::query()->with('estados', 'user', 'equipo')
             ->with(['ejecuciones' => function ($q) {
-                $q->withCount(['pasos as pasos_completados' => fn($qq) => $qq->where('estado', 'completado')]);
+                $q->withCount(['pasos as pasos_completados' => fn($qq) => $qq->where('estado', 'completado')])
+                  ->withCount('pasos as total_pasos');
             }]);
 
         if ($request->filled('equipo_id')) {
@@ -203,18 +204,8 @@ class FlujoTrabajoController extends Controller
             ->with(['ejecucion.flujoTrabajo', 'ejecutores' => fn($q) => $q->where('user_id', $user->id)])
             ->get();
 
-        $pasoCounts = null;
-        if ($verMios) {
-            $flujoIds = $flujos->pluck('id');
-            $pasoCounts = FlujoPasoAsignacion::query()->whereHas('ejecucion', fn($q) => $q->whereIn('flujo_trabajo_id', $flujoIds))
-                ->whereHas('ejecutores', fn($q) => $q->where('user_id', $user->id))
-                ->selectRaw('flujo_ejecucion_id, COUNT(*) as total, SUM(CASE WHEN estado = ? THEN 1 ELSE 0 END) as completados', ['completado'])
-                ->groupBy('flujo_ejecucion_id')
-                ->get()
-                ->keyBy('flujo_ejecucion_id');
-        }
-
         $pasoUsuarios = null;
+
         if (!$verMios && $flujos->isNotEmpty()) {
             $userIds = collect();
             foreach ($flujos as $flujo) {
@@ -246,6 +237,6 @@ class FlujoTrabajoController extends Controller
             ->with(['ejecucion.flujoTrabajo'])
             ->get();
 
-        return view('flujos', compact('flujos', 'equipos', 'esSuperAdmin', 'misPasosPendientes', 'verMios', 'pasoCounts', 'pasoUsuarios', 'pendientesRevision'));
+        return view('flujos', compact('flujos', 'equipos', 'esSuperAdmin', 'misPasosPendientes', 'verMios', 'pasoUsuarios', 'pendientesRevision'));
     }
 }

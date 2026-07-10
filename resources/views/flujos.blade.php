@@ -180,11 +180,8 @@
                         @php
                             $misPasosFlujo = $misPasosPendientes->filter(fn($p) => $p->ejecucion?->flujo_trabajo_id === $flujo->id);
                             $ejecucionFlujo = $misPasosFlujo->first()?->ejecucion ?? $flujo->ejecuciones->first();
-                            $counts = $ejecucionFlujo && isset($pasoCounts[$ejecucionFlujo->id])
-                                ? $pasoCounts[$ejecucionFlujo->id]
-                                : null;
-                            $totalAsignados = $counts?->total ?? $misPasosFlujo->count();
-                            $completadosCount = $counts?->completados ?? 0;
+                            $totalPasos = $ejecucionFlujo?->total_pasos ?? count($flujo->pasos ?? []);
+                            $completadosPasos = $ejecucionFlujo?->pasos_completados ?? 0;
                         @endphp
                         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
                             <div class="flex items-start justify-between">
@@ -195,7 +192,7 @@
                                 </div>
                                 <div class="text-right text-sm">
                                     <span class="text-slate-400">Progreso:</span>
-                                    <p class="font-semibold text-slate-700">{{ $completadosCount }}/{{ $totalAsignados }} pasos</p>
+                                    <p class="font-semibold text-slate-700">{{ $completadosPasos }}/{{ $totalPasos }} pasos</p>
                                 </div>
                             </div>
                             @if($misPasosFlujo->isNotEmpty())
