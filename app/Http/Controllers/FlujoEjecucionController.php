@@ -169,6 +169,11 @@ class FlujoEjecucionController extends Controller
     {
         $user = Auth::user();
 
+        $ejecucion = $pasoAsignacion->ejecucion;
+        if (!$ejecucion) {
+            return response()->json(['success' => false, 'message' => 'La ejecucion del flujo no existe.'], 400);
+        }
+
         $ejecutor = DB::table('flujo_paso_ejecutores')
             ->where('flujo_paso_asignacion_id', $pasoAsignacion->id)
             ->where('user_id', $user->id)
@@ -182,7 +187,7 @@ class FlujoEjecucionController extends Controller
             return response()->json(['success' => false, 'message' => 'Ya completaste este paso.'], 400);
         }
 
-        $pasoInfo = ($pasoAsignacion->ejecucion->flujoTrabajo->pasos ?? [])[$pasoAsignacion->paso_index] ?? [];
+        $pasoInfo = ($ejecucion->flujoTrabajo->pasos ?? [])[$pasoAsignacion->paso_index] ?? [];
         $checklist = $pasoInfo['checklist'] ?? [];
         $userId = $ejecutor ? $ejecutor->user_id : $user->id;
 
@@ -306,7 +311,7 @@ class FlujoEjecucionController extends Controller
                         ->update(['completada' => false, 'completed_at' => null]);
                 }
 
-                $pasoInfo = ($pasoAsignacion->ejecucion->flujoTrabajo->pasos ?? [])[$pasoAsignacion->paso_index] ?? [];
+        $pasoInfo = ($ejecucion->flujoTrabajo->pasos ?? [])[$pasoAsignacion->paso_index] ?? [];
                 $checklist = $pasoInfo['checklist'] ?? [];
                 $checklistIds = collect($checklist)->pluck('item')->filter()->values();
                 if ($checklistIds->isNotEmpty()) {

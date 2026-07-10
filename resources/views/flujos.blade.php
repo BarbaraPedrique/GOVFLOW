@@ -54,7 +54,7 @@
         'estado' => $p->estado,
         'fecha_limite' => $p->fecha_limite?->format('d/m/Y H:i'),
         'flujo_nombre' => $p->ejecucion?->flujoTrabajo?->nombre ?? '—',
-        'checklist' => ($p->ejecucion->flujoTrabajo->pasos ?? [])[$p->paso_index]['checklist'] ?? [],
+        'checklist' => ($p->ejecucion?->flujoTrabajo?->pasos ?? [])[$p->paso_index]['checklist'] ?? [],
     ])->values()) }},
     misRevisiones: {{ json_encode($pendientesRevision->map(fn($p) => [
         'id' => $p->id,
@@ -179,7 +179,7 @@
                     @foreach($flujos as $flujo)
                         @php
                             $misPasosFlujo = $misPasosPendientes->filter(fn($p) => $p->ejecucion?->flujo_trabajo_id === $flujo->id);
-                            $ejecucionFlujo = $misPasosFlujo->first()?->ejecucion ?? $flujo->ejecuciones->first();
+                            $ejecucionFlujo = $flujo->ejecuciones->first() ?? $misPasosFlujo->first()?->ejecucion;
                             $totalPasos = $ejecucionFlujo?->total_pasos ?? count($flujo->pasos ?? []);
                             $completadosPasos = $ejecucionFlujo?->pasos_completados ?? 0;
                         @endphp
