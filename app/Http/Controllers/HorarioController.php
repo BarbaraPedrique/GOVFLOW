@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Horario;
 use App\Models\Tarea;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,13 @@ class HorarioController extends Controller
                 $q->whereNull('categoria')
                   ->orWhereNotIn('categoria', ['Horario', 'Flujo', 'Solicitud']);
             })
-            ->get();
+            ->get()
+            ->map(function ($t) {
+                if (is_string($t->fecha_vencimiento)) {
+                    $t->fecha_vencimiento = Carbon::parse($t->fecha_vencimiento);
+                }
+                return $t;
+            });
         $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
         $coloresPrioridad = ['alta' => '#EF4444', 'media' => '#F59E0B', 'baja' => '#10B981'];
