@@ -114,7 +114,7 @@ class SolicitudClienteController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $equiposDisponibles = Equipo::query()->all();
+        $equiposDisponibles = Equipo::all();
 
         $revisionesFlujo = FlujoPasoAsignacion::query()->where('revisor_id', $user->id)
             ->where('revision_estado', 'en_revision')

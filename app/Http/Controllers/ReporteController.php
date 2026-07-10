@@ -141,7 +141,7 @@ class ReporteController extends Controller
             ->whereBetween('created_at', [$inicio, $fin])
             ->count();
 
-        $cambiosRoles = DB::table('role_historials')
+        $cambiosRoles = DB::table('role_historial')
             ->whereBetween('asignado_en', [$inicio, $fin])
             ->count();
 
