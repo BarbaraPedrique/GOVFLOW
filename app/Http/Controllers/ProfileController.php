@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FlujoTrabajo;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -67,7 +68,19 @@ class ProfileController extends Controller
             ->where('estado', 'Completado')
             ->whereNotNull('fecha_completado')
             ->orderByDesc('fecha_completado')
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                if (is_string($item->fecha_completado)) {
+                    $item->fecha_completado = Carbon::parse($item->fecha_completado);
+                }
+                if (is_string($item->fecha_limite ?? null)) {
+                    $item->fecha_limite = Carbon::parse($item->fecha_limite);
+                }
+                $item->completado_a_tiempo = $item->fecha_completado && $item->fecha_limite
+                    ? $item->fecha_completado->lte($item->fecha_limite)
+                    : false;
+                return $item;
+            });
 
         $eficienciaMensual = DB::table('flujos_trabajo')->where('user_id', $user->id)
             ->whereNotNull('fecha_completado')

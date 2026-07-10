@@ -8,12 +8,24 @@ use App\Models\LogAuditoria;
 use App\Models\Notificacion;
 use App\Models\Tarea;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class SolicitudClienteController extends Controller
 {
+    private function hidratarFechas(iterable $items, array $campos = ['created_at', 'updated_at']): iterable
+    {
+        return collect($items)->map(function ($item) use ($campos) {
+            foreach ($campos as $campo) {
+                if (isset($item->$campo) && is_string($item->$campo)) {
+                    $item->$campo = Carbon::parse($item->$campo);
+                }
+            }
+            return $item;
+        });
+    }
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -101,18 +113,22 @@ class SolicitudClienteController extends Controller
     {
         $user = Auth::user();
 
-        $pendientes = DB::table('tareas')->where('user_id', $user->id)
+        $pendientes = $this->hidratarFechas(
+            DB::table('tareas')->where('user_id', $user->id)
             ->where('categoria', 'Solicitud')
             ->where('status', 'pendiente')
             ->where('completada', false)
             ->orderByDesc('created_at')
-            ->get();
+            ->get()
+        );
 
-        $historial = DB::table('tareas')->where('user_id', $user->id)
+        $historial = $this->hidratarFechas(
+            DB::table('tareas')->where('user_id', $user->id)
             ->where('categoria', 'Solicitud')
             ->whereIn('status', ['aprobado', 'rechazado'])
             ->orderByDesc('created_at')
-            ->get();
+            ->get()
+        );
 
         $equiposDisponibles = Equipo::all();
 
@@ -124,17 +140,19 @@ class SolicitudClienteController extends Controller
         $registrosPendientes = collect();
         $registrosHistorial = collect();
         if ($user->role?->slug === 'super_admin') {
-            $registrosPendientes = DB::table('users')->where('status', User::STATUS_PENDIENTE)
+            $registrosPendientes = $this->hidratarFechas(
+                DB::table('users')->where('status', User::STATUS_PENDIENTE)
                 ->orderByDesc('created_at')
-                ->get();
+                ->get()
+            );
 
-            $tareasRegistro = DB::table('tareas')->where('categoria', 'Solicitud')
+            $registrosHistorial = $this->hidratarFechas(
+                DB::table('tareas')->where('categoria', 'Solicitud')
                 ->where('descripcion', 'like', 'user_id:%')
                 ->whereIn('status', ['aprobado', 'rechazado'])
                 ->orderByDesc('updated_at')
-                ->get();
-
-            $registrosHistorial = $tareasRegistro;
+                ->get()
+            );
         }
 
         return view('solicitudes_index', compact(
